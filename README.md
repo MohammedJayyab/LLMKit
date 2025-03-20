@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/yourusername/LLMKit)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/MohammedJayyab/LLMKit)
 
 LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, and DeepSeek.
 
