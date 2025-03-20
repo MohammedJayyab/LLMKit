@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>LLMKit</PackageId>
-		<Version>2.0</Version>
+		<Version>2.0.0</Version>
 		<Authors>Mohammed Abujayyab</Authors>
 		<Company></Company>
 		<Description>A library for orchestrating interactions with various Large Language Models (LLMs).</Description>
