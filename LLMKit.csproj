@@ -13,7 +13,7 @@
 		<PackageTags>LLM, Orchestrator, OpenAI, Gemini, DeepSeek, AI, Language Model</PackageTags>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<RepositoryUrl>https://your-repository-url.com</RepositoryUrl>
+		<RepositoryUrl>https://github.com/MohammedJayyab/LLMKit</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
