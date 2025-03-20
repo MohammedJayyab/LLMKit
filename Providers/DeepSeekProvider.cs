@@ -10,9 +10,10 @@ namespace LLMKit.Providers
     /// </summary>
     public class DeepSeekProvider : BaseLLMProvider
     {
-        protected override string BaseEndpoint => Constants.DeepSeekEndpoint;
+        private static readonly Uri DefaultEndpoint = new("https://api.deepseek.com/v1/chat/completions");
 
-        public DeepSeekProvider(string apiKey, string model) : base(apiKey, model)
+        public DeepSeekProvider(string apiKey, string model, Uri? endpoint = null) 
+            : base(apiKey, model, endpoint ?? DefaultEndpoint)
         {
         }
 
@@ -28,8 +29,7 @@ namespace LLMKit.Providers
             try
             {
                 var requestData = CreateRequestData(request);
-                var responseJson = await SendRequestAsync(BaseEndpoint, requestData, cancellationToken);
-
+                var responseJson = await SendRequestAsync(requestData, cancellationToken);
                 return ParseResponse(responseJson);
             }
             catch (HttpRequestException ex)

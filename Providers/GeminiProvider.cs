@@ -1,6 +1,7 @@
 ﻿// Providers/GeminiProvider.cs
 using LLMKit.Models;
 using System.Text.Json;
+using System.Text;
 
 namespace LLMKit.Providers
 {
@@ -9,18 +10,53 @@ namespace LLMKit.Providers
     /// </summary>
     public class GeminiProvider : BaseLLMProvider
     {
-        protected override string BaseEndpoint => Constants.GeminiEndpoint;
+        private static readonly Uri BaseEndpoint = new("https://generativelanguage.googleapis.com/v1beta/models");
+       
 
-        public GeminiProvider(string apiKey, string model) : base(apiKey, model)
+        public GeminiProvider(string apiKey, string model, Uri? endpoint = null)
+            : base(apiKey, model, ConstructEndpoint(endpoint, model, apiKey))
         {
+            
+        }
+
+        private static Uri ConstructEndpoint(Uri? customEndpoint, string model, string apiKey)
+        {
+            if (customEndpoint != null)
+            {
+                var uriBuilder = new UriBuilder(customEndpoint);
+                var customQuery = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+                customQuery["key"] = apiKey;
+                uriBuilder.Query = customQuery.ToString();
+                return uriBuilder.Uri;
+            }
+
+            var builder = new UriBuilder(BaseEndpoint);
+            builder.Path = $"{builder.Path}/{model}:generateContent";
+            var defaultQuery = System.Web.HttpUtility.ParseQueryString(builder.Query);
+            defaultQuery["key"] = apiKey;
+            builder.Query = defaultQuery.ToString();
+            return builder.Uri;
+        }
+
+        protected override void ConfigureHttpClient()
+        {
+            // No need to add API key here as it's already in the URI
         }
 
         protected override object CreateRequestData(LLMRequest request)
         {
-            var processedMessages = ProcessMessages(request.Messages.ToList());
             return new
             {
-                contents = processedMessages.ConvertAll(m => new { parts = new[] { new { text = m.Content } } })
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = request.Messages.Last().Content }
+                        }
+                    }
+                }
             };
         }
 
@@ -29,8 +65,7 @@ namespace LLMKit.Providers
             try
             {
                 var requestData = CreateRequestData(request);
-                var endpoint = GetEndpointUrl();
-                var responseJson = await SendRequestAsync(endpoint, requestData, cancellationToken);
+                var responseJson = await SendRequestAsync(requestData, cancellationToken);
                 return ParseResponse(responseJson);
             }
             catch (HttpRequestException ex)
@@ -46,8 +81,6 @@ namespace LLMKit.Providers
                 throw CreateProviderException("An unexpected error occurred.", ex);
             }
         }
-
-        private string GetEndpointUrl() => $"{BaseEndpoint}/{Model}:generateContent?key={ApiKey}";
 
         private static LLMResponse ParseResponse(string responseJson)
         {
@@ -72,47 +105,37 @@ namespace LLMKit.Providers
                 && response.candidates[0].content.parts.Length > 0;
         }
 
-        private static List<ChatMessage> ProcessMessages(List<ChatMessage> messages)
+        private static string FormatMessagesForGemini(IEnumerable<ChatMessage> messages)
         {
-            var systemMessage = messages.FirstOrDefault(m => m.Role == ChatMessage.Roles.System);
-            if (systemMessage == null)
+            var conversation = new StringBuilder();
+            var messagesList = messages.ToList();
+
+            // If it's a single request (2 messages or less - system + user), include system message
+            if (messagesList.Count <= 2)
             {
-                return messages.ToList();
-            }
-
-            return CombineSystemMessageWithUser(messages, systemMessage);
-        }
-
-        private static List<ChatMessage> CombineSystemMessageWithUser(List<ChatMessage> messages, ChatMessage systemMessage)
-        {
-            var processedMessages = new List<ChatMessage>();
-            var firstUserMessage = messages.FirstOrDefault(m => m.Role == ChatMessage.Roles.User);
-
-            if (firstUserMessage != null)
-            {
-                processedMessages.Add(new ChatMessage
+                foreach (var message in messagesList)
                 {
-                    Role = ChatMessage.Roles.User,
-                    Content = CombineMessages(systemMessage.Content, firstUserMessage.Content)
-                });
-
-                processedMessages.AddRange(
-                    messages.Where(m => m.Role != ChatMessage.Roles.System && m != firstUserMessage)
-                );
+                    conversation.AppendLine(message.Content);
+                }
+                return conversation.ToString().Trim();
             }
-            else
+
+            // For conversations, skip system messages
+            messagesList = messagesList.Where(m => m.Role != ChatMessage.Roles.System).ToList();
+
+            for (int i = 0; i < messagesList.Count; i++)
             {
-                processedMessages.Add(new ChatMessage
+                var message = messagesList[i];
+                conversation.AppendLine(message.Content);
+
+                // Add a separator between messages
+                if (i < messagesList.Count - 1)
                 {
-                    Role = ChatMessage.Roles.User,
-                    Content = systemMessage.Content
-                });
+                    conversation.AppendLine();
+                }
             }
 
-            return processedMessages;
+            return conversation.ToString().Trim();
         }
-
-        private static string CombineMessages(string systemContent, string userContent)
-            => $"{systemContent}\n{userContent}";
     }
 }

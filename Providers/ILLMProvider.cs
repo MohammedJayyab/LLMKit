@@ -9,6 +9,8 @@ namespace LLMKit.Providers;
 /// </summary>
 public interface ILLMProvider
 {
+    Uri Endpoint { get; }
+
     /// <summary>
     /// Generates text based on the provided request parameters.
     /// </summary>

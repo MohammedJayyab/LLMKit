@@ -10,9 +10,10 @@ namespace LLMKit.Providers
     /// </summary>
     public class OpenAIProvider : BaseLLMProvider
     {
-        protected override string BaseEndpoint => Constants.OpenAIEndpoint;
+        private static readonly Uri DefaultEndpoint = new("https://api.openai.com/v1/chat/completions");
 
-        public OpenAIProvider(string apiKey, string model) : base(apiKey, model)
+        public OpenAIProvider(string apiKey, string model, Uri? endpoint = null)
+            : base(apiKey, model, endpoint ?? DefaultEndpoint)
         {
         }
 
@@ -28,7 +29,7 @@ namespace LLMKit.Providers
             try
             {
                 var requestData = CreateRequestData(request);
-                var responseJson = await SendRequestAsync(BaseEndpoint, requestData, cancellationToken);
+                var responseJson = await SendRequestAsync(requestData, cancellationToken);
                 return ParseResponse(responseJson);
             }
             catch (HttpRequestException ex)

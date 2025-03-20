@@ -2,12 +2,6 @@ namespace LLMKit.Models
 {
     public static class Constants
     {
-        // API Endpoints
-        public const string OpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
-
-        public const string GeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models";
-        public const string DeepSeekEndpoint = "https://api.deepseek.com/v1/chat/completions";
-
         // HTTP Headers
         public const string BearerAuth = "Bearer";
 
@@ -22,6 +16,7 @@ namespace LLMKit.Models
         public const double DefaultPresencePenalty = 0.0;
         public const int DefaultMaxTokens = 2024;
         public const bool DefaultStream = false;
+        public const int DefaultMaxMessages = 15;
 
         // Validation Boundaries
         public const double MinTemperature = 0.0;

@@ -1,10 +1,15 @@
-﻿using LLMKit.Models;
+using System.Text;
+using LLMKit.Models;
 
-namespace LLMKit
+namespace LLMKit.Builders
 {
-    public class ChatMessageBuilder
+    public sealed class ChatMessageBuilder
     {
-        private readonly List<ChatMessage> _messages = new List<ChatMessage>();
+        private readonly List<ChatMessage> _messages = new();
+
+        private ChatMessageBuilder()
+        {
+        }
 
         public static ChatMessageBuilder Create()
         {
@@ -13,25 +18,28 @@ namespace LLMKit
 
         public ChatMessageBuilder AddSystemMessage(string content)
         {
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
             _messages.Add(new ChatMessage(ChatMessage.Roles.System, content));
             return this;
         }
 
         public ChatMessageBuilder AddUserMessage(string content)
         {
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
             _messages.Add(new ChatMessage(ChatMessage.Roles.User, content));
             return this;
         }
 
         public ChatMessageBuilder AddAssistantMessage(string content)
         {
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
             _messages.Add(new ChatMessage(ChatMessage.Roles.Assistant, content));
             return this;
         }
 
-        public List<ChatMessage> Build()
+        public IReadOnlyList<ChatMessage> Build()
         {
-            return _messages;
+            return _messages.AsReadOnly();
         }
     }
-}
+} 

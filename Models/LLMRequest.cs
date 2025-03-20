@@ -29,6 +29,14 @@ namespace LLMKit.Models
                     return new ReadOnlyCollection<ChatMessage>(_messages.ToList());
                 }
             }
+            set
+            {
+                lock (_lock)
+                {
+                    _messages.Clear();
+                    _messages.AddRange(value.ToList());
+                }
+            }
         }
 
         /// <summary>
@@ -135,16 +143,9 @@ namespace LLMKit.Models
         /// <param name="messages">The list of chat messages.</param>
         /// <returns>The current instance for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when messages is null.</exception>
-        public LLMRequest WithMessages(List<ChatMessage> messages)
+        public LLMRequest WithMessages(IEnumerable<ChatMessage> messages)
         {
-            if (messages == null)
-                throw new ArgumentNullException(nameof(messages));
-
-            lock (_lock)
-            {
-                _messages.Clear();
-                _messages.AddRange(messages);
-            }
+            Messages = messages.ToList();
             return this;
         }
 

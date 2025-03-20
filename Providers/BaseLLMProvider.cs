@@ -18,6 +18,16 @@ namespace LLMKit.Providers
         private readonly string _model;
         private readonly HttpClient _httpClient;
         private bool _disposed;
+        private const int MaxRetries = 3;
+
+        public Uri Endpoint { get; protected set; }
+
+        private static readonly TimeSpan[] RetryDelays = new[]
+        {
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(4)
+        };
 
         /// <summary>
         /// Gets the API key used for authentication with the LLM service.
@@ -35,26 +45,24 @@ namespace LLMKit.Providers
         protected HttpClient HttpClient => _httpClient;
 
         /// <summary>
-        /// The base endpoint URL for the LLM service.
-        /// Each provider must specify their specific endpoint.
-        /// </summary>
-        protected abstract string BaseEndpoint { get; }
-
-        /// <summary>
         /// Initializes a new instance of the LLM provider.
         /// </summary>
         /// <param name="apiKey">The API key for authentication.</param>
         /// <param name="model">The model identifier to use.</param>
-        /// <exception cref="ArgumentException">Thrown when apiKey or model is null or empty.</exception>
-        protected BaseLLMProvider(string apiKey, string model)
+        /// <param name="endpoint">The endpoint for the LLM service.</param>
+        /// <exception cref="ArgumentException">Thrown when apiKey, model, or endpoint is null or empty.</exception>
+        protected BaseLLMProvider(string apiKey, string model, Uri endpoint)
         {
             if (string.IsNullOrEmpty(apiKey))
                 throw new ArgumentException("API key cannot be null or empty.", nameof(apiKey));
             if (string.IsNullOrEmpty(model))
                 throw new ArgumentException("Model cannot be null or empty.", nameof(model));
+            if (endpoint == null)
+                throw new ArgumentNullException(nameof(endpoint));
 
             _apiKey = apiKey;
             _model = model;
+            Endpoint = endpoint;
             _httpClient = CreateHttpClient();
             ConfigureHttpClient();
         }
@@ -67,7 +75,7 @@ namespace LLMKit.Providers
         {
             return new HttpClient
             {
-                Timeout = TimeSpan.FromSeconds(30)
+                Timeout = TimeSpan.FromSeconds(60)
             };
         }
 
@@ -102,7 +110,7 @@ namespace LLMKit.Providers
         /// <summary>
         /// Sends an HTTP request to the specified endpoint with the given request data.
         /// </summary>
-        protected async Task<string> SendRequestAsync(string endpoint, object requestData, CancellationToken cancellationToken = default)
+        protected async Task<string> SendRequestAsync(object requestData, CancellationToken cancellationToken = default)
         {
             var options = new JsonSerializerOptions
             {
@@ -112,10 +120,34 @@ namespace LLMKit.Providers
             var json = JsonSerializer.Serialize(requestData, options);
             using var content = new StringContent(json, Encoding.UTF8, Constants.JsonContentType);
 
-            var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            for (int attempt = 0; attempt <= MaxRetries; attempt++)
+            {
+                try
+                {
+                    if (attempt > 0)
+                    {
+                        await Task.Delay(RetryDelays[attempt - 1], cancellationToken);
+                    }
 
-            return await response.Content.ReadAsStringAsync(cancellationToken);
+                    var response = await _httpClient.PostAsync(Endpoint, content, cancellationToken);
+                    response.EnsureSuccessStatusCode();
+                    return await response.Content.ReadAsStringAsync(cancellationToken);
+                }
+                catch (HttpRequestException ex) when (attempt < MaxRetries)
+                {
+                    continue;
+                }
+                catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (attempt == MaxRetries)
+                {
+                    throw CreateProviderException($"Request failed after {MaxRetries} attempts", ex);
+                }
+            }
+
+            throw new LLMException("Unexpected error in retry logic");
         }
 
         /// <summary>
@@ -127,9 +159,9 @@ namespace LLMKit.Providers
         /// <summary>
         /// Creates a standardized exception with provider-specific context.
         /// </summary>
-        protected LLMKitException CreateProviderException(string message, Exception innerException)
+        protected LLMException CreateProviderException(string message, Exception innerException)
         {
-            return new LLMKitException(
+            return new LLMException(
                 $"Error occurred while calling the {GetType().Name.Replace("Provider", "")} API: {message}",
                 innerException);
         }
