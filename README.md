@@ -22,6 +22,10 @@ LLMKit is a thread-safe .NET library that provides a unified interface for inter
 ```powershell
 Install-Package LLMKit
 ```
+## Requirements
+
+- .NET 8.0 or later
+- Valid API keys for the LLM providers
 
 ## Quick Start
 
@@ -112,7 +116,7 @@ var provider = new OpenAIProvider(
 ```csharp
 var provider = new GeminiProvider(
     apiKey: "your-api-key",
-    model: "gemini-pro"
+    model: "gemini-2.0-flash"
 );
 ```
 
@@ -141,12 +145,15 @@ var client = new LLMClient(new GeminiProvider(
     model: "gemini-pro",
     endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
 ));
+
+// DeepSeek with custom endpoint
+var client = new LLMClient(new DeepSeekProvider(
+    apiKey: "your-api-key",
+    model: "deepseek-chat",
+    endpoint: new Uri("https://api.deepseek.com/v1/chat/completions")
+));
 ```
 
-## Requirements
-
-- .NET 8.0 or later
-- Valid API keys for the LLM providers
 
 ## License
 
