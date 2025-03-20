@@ -1,15 +1,15 @@
-# LLMOrchestrator
+# LLMKit
 
-[![NuGet](https://img.shields.io/nuget/v/LLMOrchestrator.svg)](https://www.nuget.org/packages/LLMOrchestrator)
+[![NuGet](https://img.shields.io/nuget/v/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-LLMOrchestrator is a thread-safe .NET library designed to simplify interactions with various Large Language Models (LLMs) such as OpenAI, Gemini, and DeepSeek. It provides a unified interface for sending prompts and retrieving responses, allowing developers to easily switch between different LLM providers without significant code changes.
+LLMKit is a thread-safe .NET library designed to simplify interactions with various Large Language Models (LLMs) such as OpenAI, Gemini, and DeepSeek. It provides a unified interface for sending prompts and retrieving responses, allowing developers to easily switch between different LLM providers without significant code changes.
 
 ## Features
 
 - **Provider Abstraction**: A consistent interface for interacting with multiple LLM providers
 - **Thread-Safe Implementation**: Safe for use in multi-threaded environments
-- **Simplified Client**: An `LLMOrchestratorClient` that handles the complexities of LLM interactions
+- **Simplified Client**: An `LLMClient` that handles the complexities of LLM interactions
 - **Fluent Message Building**: A `ChatMessageBuilder` for easy creation of message lists
 - **Simplified Conversations**: A `GenerateTextAsync` method for quick and easy conversations
 - **Configurable Parameters**: Set defaults for `MaxTokens`, `Temperature`, `TopP`, and more
@@ -24,25 +24,25 @@ LLMOrchestrator is a thread-safe .NET library designed to simplify interactions 
 
 ## Installation
 
-You can install LLMOrchestrator via NuGet:
+You can install LLMKit via NuGet:
 
 ```powershell
-Install-Package LLMOrchestrator
+Install-Package LLMKit
 ```
 
 ## Quick Start
 
 ```csharp
-using LLMOrchestrator;
-using LLMOrchestrator.Providers;
+using LLMKit;
+using LLMKit.Providers;
 
 // Initialize with OpenAI
-var orchestrator = new LLMOrchestratorClient(
+var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
 // Generate a response
-string response = await orchestrator.GenerateTextAsync(
+string response = await client.GenerateTextAsync(
     "You are a helpful assistant.",
     "What is the capital of France?"
 );
@@ -63,7 +63,7 @@ public class Startup
                 model: Configuration["OpenAI:Model"]
             )
         );
-        services.AddSingleton<LLMOrchestratorClient>();
+        services.AddSingleton<LLMClient>();
     }
 }
 ```
@@ -83,17 +83,17 @@ var request = new LLMRequest()
 ### Thread-Safe Usage
 
 ```csharp
-// The LLMOrchestratorClient is thread-safe and can handle concurrent requests
-var orchestrator = new LLMOrchestratorClient(
+// The LLMClient is thread-safe and can handle concurrent requests
+var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
 // Example of concurrent requests
 var tasks = new[]
 {
-    orchestrator.GenerateTextAsync("You are a helpful assistant.", "What is the capital of France?"),
-    orchestrator.GenerateTextAsync("You are a code expert.", "Write a C# function to calculate factorial."),
-    orchestrator.GenerateTextAsync("You are a math tutor.", "Explain the Pythagorean theorem.")
+    client.GenerateTextAsync("You are a helpful assistant.", "What is the capital of France?"),
+    client.GenerateTextAsync("You are a code expert.", "Write a C# function to calculate factorial."),
+    client.GenerateTextAsync("You are a math tutor.", "Explain the Pythagorean theorem.")
 };
 
 // All requests are processed concurrently and safely
@@ -105,12 +105,12 @@ var responses = await Task.WhenAll(tasks);
 ```csharp
 try
 {
-    var response = await orchestrator.GenerateTextAsync(
+    var response = await client.GenerateTextAsync(
         "You are a helpful assistant.",
         "What is the capital of France?"
     );
 }
-catch (LLMOrchestratorException ex)
+catch (LLMKitException ex)
 {
     Console.WriteLine($"Error: {ex.Message}");
     if (ex.InnerException != null)
@@ -126,7 +126,7 @@ catch (LLMOrchestratorException ex)
 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 try
 {
-    var response = await orchestrator.GenerateTextAsync(
+    var response = await client.GenerateTextAsync(
         "You are a helpful assistant.",
         "What is the capital of France?",
         cts.Token
