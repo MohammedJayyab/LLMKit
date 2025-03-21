@@ -1,7 +1,7 @@
 ﻿// Providers/GeminiProvider.cs
 using LLMKit.Models;
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 
 namespace LLMKit.Providers
 {
@@ -11,12 +11,10 @@ namespace LLMKit.Providers
     public class GeminiProvider : BaseLLMProvider
     {
         private static readonly Uri BaseEndpoint = new("https://generativelanguage.googleapis.com/v1beta/models");
-       
 
         public GeminiProvider(string apiKey, string model, Uri? endpoint = null)
             : base(apiKey, model, ConstructEndpoint(endpoint, model, apiKey))
         {
-            
         }
 
         private static Uri ConstructEndpoint(Uri? customEndpoint, string model, string apiKey)
@@ -53,7 +51,7 @@ namespace LLMKit.Providers
                     {
                         parts = new[]
                         {
-                            new { text = request.Messages.Last().Content }
+                            new { text = FormatMessagesForGemini(request.Messages) }
                         }
                     }
                 }

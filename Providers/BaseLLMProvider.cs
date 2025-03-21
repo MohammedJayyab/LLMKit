@@ -94,6 +94,8 @@ namespace LLMKit.Providers
         /// </summary>
         protected virtual object CreateRequestData(LLMRequest request)
         {
+            ArgumentNullException.ThrowIfNull(request, nameof(request)); // Null check added
+
             return new
             {
                 model = _model,
@@ -112,6 +114,8 @@ namespace LLMKit.Providers
         /// </summary>
         protected async Task<string> SendRequestAsync(object requestData, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(requestData, nameof(requestData));
+
             var options = new JsonSerializerOptions
             {
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -133,9 +137,13 @@ namespace LLMKit.Providers
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsStringAsync(cancellationToken);
                 }
-                catch (HttpRequestException ex) when (attempt < MaxRetries)
+                catch (HttpRequestException) when (attempt < MaxRetries)
                 {
                     continue;
+                }
+                catch (JsonException ex)
+                {
+                    throw CreateProviderException("Error processing API response.", ex);
                 }
                 catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -161,9 +169,8 @@ namespace LLMKit.Providers
         /// </summary>
         protected LLMException CreateProviderException(string message, Exception innerException)
         {
-            return new LLMException(
-                $"Error occurred while calling the {GetType().Name.Replace("Provider", "")} API: {message}",
-                innerException);
+            string fullMessage = $"Error occurred while calling the {GetType().Name.Replace("Provider", "")} API: {message}";
+            return new LLMException(fullMessage, innerException ?? new Exception("No inner exception provided."));
         }
 
         /// <summary>

@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>LLMKit</PackageId>
-		<Version>2.0.0</Version>
+		<Version>2.1.0</Version>
 		<Authors>Mohammed Abujayyab</Authors>
 		<Company></Company>
 		<Description>A library for orchestrating interactions with various Large Language Models (LLMs).</Description>
@@ -16,6 +16,7 @@
 		<RepositoryUrl>https://github.com/MohammedJayyab/LLMKit</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>images/LLMKit.png</PackageIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,6 +24,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="images\LLMKit.png" Pack="true" PackagePath="images\" />
 	</ItemGroup>
 
 </Project>

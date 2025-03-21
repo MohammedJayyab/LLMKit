@@ -1,12 +1,11 @@
 using LLMKit.Models;
-using LLMKit.Builders;
 
 namespace LLMKit.Services
 {
     /// <summary>
     /// Service for managing conversations and message handling.
     /// </summary>
-    public class ConversationService
+    internal class ConversationService
     {
         /// <summary>
         /// Creates a new conversation with the specified maximum messages.
@@ -23,8 +22,8 @@ namespace LLMKit.Services
         {
             ArgumentNullException.ThrowIfNull(conversation, nameof(conversation));
             ArgumentNullException.ThrowIfNull(content, nameof(content));
-            
+
             conversation.AddMessage(role, content);
         }
     }
-} 
+}

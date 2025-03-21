@@ -12,7 +12,7 @@ namespace LLMKit.Providers
     {
         private static readonly Uri DefaultEndpoint = new("https://api.deepseek.com/v1/chat/completions");
 
-        public DeepSeekProvider(string apiKey, string model, Uri? endpoint = null) 
+        public DeepSeekProvider(string apiKey, string model, Uri? endpoint = null)
             : base(apiKey, model, endpoint ?? DefaultEndpoint)
         {
         }

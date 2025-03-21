@@ -11,6 +11,16 @@ namespace LLMKit
     /// Main client for interacting with LLM providers.
     /// Provides a simplified interface for text generation using various LLM services.
     /// </summary>
+    /// <remarks>
+    /// This class implements IDisposable and should be disposed when no longer needed.
+    /// Use the 'using' statement to ensure proper disposal:
+    /// <code>
+    /// using (var client = new LLMClient(provider))
+    /// {
+    ///     await client.GenerateTextAsync("Hello");
+    /// }
+    /// </code>
+    /// </remarks>
     public class LLMClient : IDisposable
     {
         private readonly ILLMProvider _provider;
@@ -185,12 +195,19 @@ namespace LLMKit
                 throw new ObjectDisposedException(nameof(LLMClient));
         }
 
+        /// <summary>
+        /// Releases all resources used by the LLMClient.
+        /// </summary>
+        /// <remarks>
+        /// This method should be called when the client is no longer needed.
+        /// It's recommended to use the 'using' statement instead of calling Dispose directly.
+        /// </remarks>
         public void Dispose()
         {
             if (!_disposed)
             {
-                _disposed = true;
                 ClearConversation();
+                _disposed = true;
                 // Dispose other resources if needed
             }
         }

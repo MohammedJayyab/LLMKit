@@ -1,6 +1,6 @@
 namespace LLMKit.Models
 {
-    public static class Constants
+    internal static class Constants
     {
         // HTTP Headers
         public const string BearerAuth = "Bearer";

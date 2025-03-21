@@ -34,7 +34,8 @@ Install-Package LLMKit
 using LLMKit;
 using LLMKit.Providers;
 
-var client = new LLMClient(
+// Using statement ensures proper disposal
+using var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
@@ -46,9 +47,9 @@ string response = await client.GenerateTextAsync(
 
 ## Usage Examples
 
-### Basic Conversation
+### Basic Conversation with Proper Disposal
 ```csharp
-var client = new LLMClient(new OpenAIProvider("your-api-key", "gpt-3.5-turbo"));
+using var client = new LLMClient(new OpenAIProvider("your-api-key", "gpt-3.5-turbo"));
 var conversation = client.StartConversation();
 
 await client.SendMessageAsync("Hello, how are you?");
@@ -56,6 +57,7 @@ await client.SendMessageAsync("What's the weather like?");
 await client.SendMessageAsync("Tell me a joke");
 
 string history = client.GetFormattedConversation();
+// Client is automatically disposed here
 ```
 
 ### Custom Parameters

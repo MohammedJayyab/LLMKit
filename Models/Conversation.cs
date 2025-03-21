@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Text;
 using LLMKit.Builders;
 
 namespace LLMKit.Models
@@ -15,7 +13,8 @@ namespace LLMKit.Models
         private readonly object _lock = new();
 
         public string Id => _id;
-        public IReadOnlyList<ChatMessage> Messages
+
+        internal IReadOnlyList<ChatMessage> Messages
         {
             get
             {
@@ -25,6 +24,7 @@ namespace LLMKit.Models
                 }
             }
         }
+
         public int MessageCount
         {
             get
@@ -38,7 +38,7 @@ namespace LLMKit.Models
 
         public Conversation(int maxMessages = Constants.DefaultMaxMessages)
         {
-            if(maxMessages < 0)
+            if (maxMessages < 0)
             {
                 throw new ArgumentException("Max messages must be greater than 0", nameof(maxMessages));
             }
@@ -46,7 +46,7 @@ namespace LLMKit.Models
             _id = Guid.NewGuid().ToString("N");
         }
 
-        public void AddMessage(ChatMessage message)
+        internal void AddMessage(ChatMessage message)
         {
             ArgumentNullException.ThrowIfNull(message, nameof(message));
             lock (_lock)
@@ -60,7 +60,7 @@ namespace LLMKit.Models
         {
             ArgumentNullException.ThrowIfNull(role, nameof(role));
             ArgumentNullException.ThrowIfNull(content, nameof(content));
-            
+
             if (!ChatMessage.Roles.All.Contains(role))
             {
                 throw new ArgumentException($"Invalid role: {role}. Must be one of: {string.Join(", ", ChatMessage.Roles.All)}", nameof(role));
@@ -118,6 +118,7 @@ namespace LLMKit.Models
 
             _messages.Clear();
             _messages.AddRange(systemMessages);
+
             if (firstUserMessage != null) _messages.Add(firstUserMessage);
             _messages.AddRange(recentMessages);
         }

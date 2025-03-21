@@ -3,7 +3,7 @@ using LLMKit.Models;
 
 namespace LLMKit.Builders
 {
-    public sealed class ChatMessageBuilder
+    internal sealed class ChatMessageBuilder
     {
         private readonly List<ChatMessage> _messages = new();
 
@@ -42,4 +42,4 @@ namespace LLMKit.Builders
             return _messages.AsReadOnly();
         }
     }
-} 
+}
