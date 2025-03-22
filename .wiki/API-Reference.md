@@ -10,7 +10,6 @@ The main client class for interacting with LLM providers.
 ```csharp
 public LLMClient(
     ILLMProvider provider,
-    IConversationService conversationService,
     int? defaultMaxTokens = null,
     double? defaultTemperature = null)
 ```
@@ -67,6 +66,11 @@ Releases all resources used by the LLMClient.
 
 Interface for LLM providers.
 
+### Properties
+```csharp
+Uri Endpoint { get; }
+```
+
 ### Methods
 
 #### GenerateTextAsync
@@ -74,27 +78,6 @@ Interface for LLM providers.
 Task<LLMResponse> GenerateTextAsync(
     LLMRequest request,
     CancellationToken cancellationToken = default)
-```
-
-## IConversationService
-
-Interface for managing conversations.
-
-### Methods
-
-#### CreateConversation
-```csharp
-Conversation CreateConversation(int maxMessages)
-```
-
-#### AddMessage
-```csharp
-void AddMessage(Conversation conversation, string role, string content)
-```
-
-#### ClearConversation
-```csharp
-void ClearConversation(Conversation conversation)
 ```
 
 ## ChatMessageBuilder
@@ -134,13 +117,21 @@ public IReadOnlyList<ChatMessage> Build()
 ```csharp
 public class LLMRequest
 {
-    public IEnumerable<ChatMessage> Messages { get; private set; }
-    public int? MaxTokens { get; private set; }
-    public double? Temperature { get; private set; }
+    public IReadOnlyList<ChatMessage> Messages { get; }
+    public double Temperature { get; }
+    public double TopP { get; }
+    public double FrequencyPenalty { get; }
+    public double PresencePenalty { get; }
+    public int MaxTokens { get; }
+    public bool Stream { get; }
 
     public LLMRequest WithMessages(IEnumerable<ChatMessage> messages)
-    public LLMRequest WithMaxTokens(int? maxTokens)
     public LLMRequest WithTemperature(double? temperature)
+    public LLMRequest WithTopP(double topP)
+    public LLMRequest WithFrequencyPenalty(double frequencyPenalty)
+    public LLMRequest WithPresencePenalty(double presencePenalty)
+    public LLMRequest WithMaxTokens(int? maxTokens)
+    public LLMRequest WithStream(bool stream)
 }
 ```
 
@@ -161,12 +152,14 @@ public class ChatMessage
     public string Role { get; }
     public string Content { get; }
     public DateTime Timestamp { get; }
+    public string Id { get; }
 
     public static class Roles
     {
         public const string System = "system";
         public const string User = "user";
         public const string Assistant = "assistant";
+        public static readonly string[] All;
     }
 }
 ```
@@ -175,9 +168,9 @@ public class ChatMessage
 ```csharp
 public class Conversation
 {
+    public string Id { get; }
     public IReadOnlyList<ChatMessage> Messages { get; }
     public int MessageCount { get; }
-    public int MaxMessages { get; }
 
     public void AddMessage(string role, string content)
     public void Clear()
@@ -203,6 +196,10 @@ public static class Constants
 {
     public const int DefaultMaxMessages = 10;
     public const double DefaultTemperature = 0.7;
+    public const double DefaultTopP = 1.0;
+    public const double DefaultFrequencyPenalty = 0.0;
+    public const double DefaultPresencePenalty = 0.0;
     public const int DefaultMaxTokens = 2000;
+    public const bool DefaultStream = false;
 }
 ``` 

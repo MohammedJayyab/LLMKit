@@ -11,7 +11,9 @@ The main entry point for interacting with LLM providers.
 public class LLMClient : IDisposable
 {
     private readonly ILLMProvider _provider;
-    private readonly IConversationService _conversationService;
+    private readonly ConversationService _conversationService;
+    private readonly object _conversationLock = new();
+    private Conversation? _currentConversation;
     // ...
 }
 ```
@@ -29,6 +31,7 @@ Abstract interface and implementations for different LLM providers.
 ```csharp
 public interface ILLMProvider
 {
+    Uri Endpoint { get; }
     Task<LLMResponse> GenerateTextAsync(LLMRequest request, CancellationToken cancellationToken = default);
 }
 ```
@@ -39,14 +42,13 @@ Supported providers:
 - DeepSeek
 
 ### 3. Conversation Management
-Handles conversation state and message history.
+Internal service for managing conversation state and message history.
 
 ```csharp
-public interface IConversationService
+internal class ConversationService
 {
-    Conversation CreateConversation(int maxMessages);
-    void AddMessage(Conversation conversation, string role, string content);
-    void ClearConversation(Conversation conversation);
+    public Conversation CreateConversation(int maxMessages)
+    public void AddMessage(Conversation conversation, string role, string content)
 }
 ```
 
@@ -54,12 +56,13 @@ public interface IConversationService
 Fluent API for constructing messages.
 
 ```csharp
-public class ChatMessageBuilder
+internal sealed class ChatMessageBuilder
 {
     public static ChatMessageBuilder Create() => new();
-    public ChatMessageBuilder AddSystemMessage(string content) { ... }
-    public ChatMessageBuilder AddUserMessage(string content) { ... }
-    public ChatMessageBuilder AddAssistantMessage(string content) { ... }
+    public ChatMessageBuilder AddSystemMessage(string content)
+    public ChatMessageBuilder AddUserMessage(string content)
+    public ChatMessageBuilder AddAssistantMessage(string content)
+    public IReadOnlyList<ChatMessage> Build()
 }
 ```
 
@@ -70,12 +73,13 @@ public class ChatMessageBuilder
 - **Open/Closed**: Easy to extend with new providers
 - **Liskov Substitution**: Providers can be swapped without affecting client code
 - **Interface Segregation**: Clean interfaces for each component
-- **Dependency Inversion**: Dependencies are abstracted through interfaces
+- **Dependency Inversion**: Provider abstraction through ILLMProvider
 
 ### 2. Thread Safety
 - Lock-based synchronization for shared resources
 - Immutable objects where possible
 - Thread-safe collections
+- Concurrent access protection
 
 ### 3. Resource Management
 - Proper implementation of IDisposable
@@ -93,7 +97,8 @@ public class ChatMessageBuilder
 classDiagram
     class LLMClient {
         -ILLMProvider _provider
-        -IConversationService _conversationService
+        -ConversationService _conversationService
+        -Conversation _currentConversation
         +StartConversation()
         +GenerateTextAsync()
         +SendMessageAsync()
@@ -102,14 +107,13 @@ classDiagram
     
     class ILLMProvider {
         <<interface>>
+        +Endpoint
         +GenerateTextAsync()
     }
     
-    class IConversationService {
-        <<interface>>
+    class ConversationService {
         +CreateConversation()
         +AddMessage()
-        +ClearConversation()
     }
     
     class ChatMessageBuilder {
@@ -117,11 +121,12 @@ classDiagram
         +AddSystemMessage()
         +AddUserMessage()
         +AddAssistantMessage()
+        +Build()
     }
     
     LLMClient --> ILLMProvider
-    LLMClient --> IConversationService
-    LLMClient --> ChatMessageBuilder
+    LLMClient --> ConversationService
+    LLMClient ..> ChatMessageBuilder
 ```
 
 ## Extension Points
@@ -131,12 +136,7 @@ classDiagram
    - Add provider-specific request/response models
    - Register in DI container
 
-2. **Custom Conversation Service**
-   - Implement `IConversationService`
-   - Add custom storage/persistence
-   - Configure in client
-
-3. **Message Building**
+2. **Message Building**
    - Extend `ChatMessageBuilder`
    - Add custom message types
    - Implement custom formatting
@@ -147,6 +147,7 @@ classDiagram
    - Use locks for shared resources
    - Keep locks as short as possible
    - Avoid nested locks
+   - Protect concurrent access to shared state
 
 2. **Resource Management**
    - Always use using statements
@@ -159,6 +160,6 @@ classDiagram
    - Handle cancellation properly
 
 4. **Testing**
-   - Mock interfaces for testing
+   - Mock ILLMProvider for testing
    - Test thread safety
    - Test resource cleanup 

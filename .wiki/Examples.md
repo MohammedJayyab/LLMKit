@@ -9,9 +9,9 @@ This page provides various examples of using LLMKit in different scenarios.
 using LLMKit;
 using LLMKit.Providers;
 
+// Using statement ensures proper disposal
 using var client = new LLMClient(
-    new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo"),
-    new ConversationService()
+    new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
 string response = await client.GenerateTextAsync(
@@ -23,8 +23,7 @@ string response = await client.GenerateTextAsync(
 ### Conversation Management
 ```csharp
 using var client = new LLMClient(
-    new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
-    new ConversationService()
+    new OpenAIProvider("your-api-key", "gpt-3.5-turbo")
 );
 
 var conversation = client.StartConversation();
@@ -42,46 +41,8 @@ string history = client.GetFormattedConversation();
 ```csharp
 var client = new LLMClient(
     new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
-    new ConversationService(),
     defaultMaxTokens: 1000,
     defaultTemperature: 0.7
-);
-```
-
-### Custom Conversation Service
-```csharp
-public class CustomConversationService : IConversationService
-{
-    private readonly ILogger<CustomConversationService> _logger;
-
-    public CustomConversationService(ILogger<CustomConversationService> logger)
-    {
-        _logger = logger;
-    }
-
-    public Conversation CreateConversation(int maxMessages)
-    {
-        _logger.LogInformation("Creating new conversation with max messages: {MaxMessages}", maxMessages);
-        return new Conversation(maxMessages);
-    }
-
-    public void AddMessage(Conversation conversation, string role, string content)
-    {
-        _logger.LogInformation("Adding message with role: {Role}", role);
-        conversation.AddMessage(role, content);
-    }
-
-    public void ClearConversation(Conversation conversation)
-    {
-        _logger.LogInformation("Clearing conversation");
-        conversation.Clear();
-    }
-}
-
-// Usage
-using var client = new LLMClient(
-    new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
-    new CustomConversationService(logger)
 );
 ```
 
@@ -107,7 +68,6 @@ services.AddSingleton<ILLMProvider>(sp =>
         model: Configuration["OpenAI:Model"]
     )
 );
-services.AddSingleton<IConversationService, ConversationService>();
 services.AddSingleton<LLMClient>();
 
 // Controller
@@ -186,8 +146,7 @@ var client = new LLMClient(
         apiKey: "your-api-key",
         model: "gpt-3.5-turbo",
         endpoint: new Uri("https://api.openai.com/v1/chat/completions")
-    ),
-    new ConversationService()
+    )
 );
 
 // Gemini with custom endpoint
@@ -196,8 +155,7 @@ var client = new LLMClient(
         apiKey: "your-api-key",
         model: "gemini-pro",
         endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
-    ),
-    new ConversationService()
+    )
 );
 ```
 
@@ -208,17 +166,12 @@ var client = new LLMClient(
 public class LLMClientTests
 {
     private readonly Mock<ILLMProvider> _providerMock;
-    private readonly Mock<IConversationService> _conversationServiceMock;
     private readonly LLMClient _client;
 
     public LLMClientTests()
     {
         _providerMock = new Mock<ILLMProvider>();
-        _conversationServiceMock = new Mock<IConversationService>();
-        _client = new LLMClient(
-            _providerMock.Object,
-            _conversationServiceMock.Object
-        );
+        _client = new LLMClient(_providerMock.Object);
     }
 
     [Fact]

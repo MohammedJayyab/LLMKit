@@ -34,7 +34,10 @@ string response = await client.GenerateTextAsync(
 
 ### Conversation Management
 ```csharp
-using var client = new LLMClient(new OpenAIProvider("your-api-key", "gpt-3.5-turbo"));
+using var client = new LLMClient(
+    new OpenAIProvider("your-api-key", "gpt-3.5-turbo")
+);
+
 var conversation = client.StartConversation();
 
 await client.SendMessageAsync("Hello, how are you?");

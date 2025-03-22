@@ -3,6 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/MohammedJayyab/LLMKit)
+[![Documentation](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/MohammedJayyab/LLMKit/wiki)
 
 LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, and DeepSeek.
 
@@ -157,6 +158,16 @@ var client = new LLMClient(new DeepSeekProvider(
 ));
 ```
 
+## Documentation 📚
+
+For more detailed information, please visit our [Wiki](https://github.com/MohammedJayyab/LLMKit/wiki):
+
+- [Getting Started Guide](https://github.com/MohammedJayyab/LLMKit/wiki/Getting-Started)
+- [Architecture Overview](https://github.com/MohammedJayyab/LLMKit/wiki/Architecture)
+- [API Reference](https://github.com/MohammedJayyab/LLMKit/wiki/API-Reference)
+- [Examples](https://github.com/MohammedJayyab/LLMKit/wiki/Examples)
+- [Contributing Guidelines](https://github.com/MohammedJayyab/LLMKit/wiki/Contributing)
+- [Roadmap](https://github.com/MohammedJayyab/LLMKit/wiki/Roadmap)
 
 ## License
 
