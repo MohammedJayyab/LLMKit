@@ -21,9 +21,21 @@ LLMKit is a thread-safe .NET library that provides a unified interface for inter
 
 ## Installation
 
+### Package Manager
 ```powershell
 Install-Package LLMKit
 ```
+
+### .NET CLI
+```bash
+dotnet add package LLMKit
+```
+
+### Clone Repository
+```bash
+git clone https://github.com/MohammedJayyab/LLMKit.git
+```
+
 ## Requirements
 
 - .NET 8.0 or later
