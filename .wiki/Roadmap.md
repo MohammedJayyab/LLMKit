@@ -2,7 +2,7 @@
 
 This document outlines potential future improvements for LLMKit.
 
-## 🎯 Current Version (2.1.0)
+## 🎯 Current Version (3.0.0)
 
 Current features include:
 - ✅ Unified interface for multiple LLM providers
@@ -14,6 +14,9 @@ Current features include:
 - ✅ Dependency injection support
 - ✅ Cancellation token support
 - ✅ Custom endpoint support for all providers
+- ✅ Multimodal support (text + images)
+- ✅ System message configuration
+- ✅ Automatic retries for failed requests
 
 ## 📈 Planned Improvements
 
@@ -24,14 +27,19 @@ Potential enhancements being considered:
 - Enhanced error handling and logging
 - Additional provider support
 - Performance optimizations
-- Retry policies
+- Retry policies with configurable strategies
 - Memory usage optimizations
+- Advanced conversation management features
+- Support for function calling
 
 ### Developer Experience
 - Expanded documentation
 - More code examples
 - Additional unit tests
 - Integration tests
+- Performance benchmarks
+- Migration guides
+- Best practices documentation
 
 ## 📢 Feedback & Suggestions
 
