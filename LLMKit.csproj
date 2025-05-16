@@ -17,6 +17,15 @@
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>images/LLMKit.png</PackageIcon>
+		<PackageReleaseNotes>Version 3.0.0:
+- Added multimodal support for text and images
+- Enhanced conversation management with improved message history
+- Added system message configuration
+- Implemented automatic retries for failed requests
+- Improved thread safety and error handling
+- Updated to .NET 8.0
+- Added comprehensive XML documentation
+- Enhanced provider implementations with better error handling</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
