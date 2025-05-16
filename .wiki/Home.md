@@ -25,7 +25,7 @@ LLMKit is a powerful, thread-safe .NET library that provides a unified interface
 
 ## Project Status
 
-- **Current Version**: 1.0.0
+- **Current Version**: 3.0.0
 - **Status**: Active Development
 - **Target Framework**: .NET 8.0+
 - **License**: MIT
