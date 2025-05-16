@@ -7,8 +7,11 @@ namespace LLMKit.Providers;
 /// This interface ensures that all LLM providers implement the necessary functionality
 /// for generating text responses from prompts.
 /// </summary>
-public interface ILLMProvider
+public interface ILLMProvider : IDisposable
 {
+    /// <summary>
+    /// Gets the endpoint URI for the provider's API.
+    /// </summary>
     Uri Endpoint { get; }
 
     /// <summary>
@@ -17,6 +20,6 @@ public interface ILLMProvider
     /// <param name="request">The request containing messages and generation parameters.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A response containing the generated text.</returns>
-    /// <exception cref="LLMOrchestratorException">Thrown when an error occurs during text generation.</exception>
+    /// <exception cref="LLMException">Thrown when an error occurs during text generation.</exception>
     Task<LLMResponse> GenerateTextAsync(LLMRequest request, CancellationToken cancellationToken = default);
 }

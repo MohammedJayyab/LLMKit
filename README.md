@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/MohammedJayyab/LLMKit)
 [![Documentation](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/MohammedJayyab/LLMKit/wiki)
-[![Visitors](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FMohammedJayyab%2FLLMKit&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=false)](https://hits.seeyoufarm.com)
 [![Downloads](https://img.shields.io/nuget/dt/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 
 LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, and DeepSeek.
@@ -13,10 +12,11 @@ LLMKit is a thread-safe .NET library that provides a unified interface for inter
 
 - Unified interface for multiple LLM providers
 - Thread-safe implementation
-- Conversation management
+- Built-in conversation management (stores up to 15 messages by default)
+- ✨ **NEW!** Multimodal support (text + images)
 - Fluent API for message building
 - Configurable parameters (tokens, temperature, etc.)
-- Comprehensive error handling
+- Comprehensive error handling with automatic retries
 - Dependency injection support
 - Cancellation token support
 - Custom endpoint support for all providers
@@ -54,34 +54,57 @@ using var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
-string response = await client.GenerateTextAsync(
-    "You are a helpful assistant.",
-    "What is the capital of France?"
-);
+// Conversation history is automatically managed
+string response = await client.GenerateTextAsync("What is the capital of France?");
+Console.WriteLine(response);
 ```
 
 ## Usage Examples
 
-### Basic Conversation with Proper Disposal
+### Conversation Management
 ```csharp
 using var client = new LLMClient(new OpenAIProvider("your-api-key", "gpt-3.5-turbo"));
-var conversation = client.StartConversation();
 
-await client.SendMessageAsync("Hello, how are you?");
-await client.SendMessageAsync("What's the weather like?");
-await client.SendMessageAsync("Tell me a joke");
+// First message
+string response1 = await client.GenerateTextAsync("Hello, how are you?");
+Console.WriteLine(response1);
 
+// Follow-up questions maintain conversation context automatically
+string response2 = await client.GenerateTextAsync("What's the weather like?");
+Console.WriteLine(response2);
+
+// Get the formatted conversation history
 string history = client.GetFormattedConversation();
-// Client is automatically disposed here
+Console.WriteLine(history);
+
+// Clear the conversation if needed
+client.ClearConversation();
+```
+
+### ✨ Multimodal Support (Image + Text)
+```csharp
+// Generate a response to a message with an image
+string response = await client.GenerateTextWithImageAsync(
+    "What can you see in this image?", 
+    "path/to/your/image.jpg"
+);
 ```
 
 ### Custom Parameters
 ```csharp
+// Create client with custom parameters
 var client = new LLMClient(
-    new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
-    defaultMaxTokens: 1000,
-    defaultTemperature: 0.7
+    provider: new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
+    maxTokens: 1000,
+    temperature: 0.7,
+    maxMessages: 20  // Store up to 20 messages in conversation history
 );
+```
+
+### ✨ Setting a System Message
+```csharp
+// Set or update the system message
+client.SetSystemMessage("You are a helpful assistant specialized in biology.");
 ```
 
 ### Dependency Injection
@@ -99,10 +122,8 @@ services.AddSingleton<LLMClient>();
 ```csharp
 try
 {
-    var response = await client.GenerateTextAsync(
-        "You are a helpful assistant.",
-        "What is the capital of France?"
-    );
+    string response = await client.GenerateTextAsync("What is the capital of France?");
+    Console.WriteLine(response);
 }
 catch (LLMException ex)
 {
@@ -113,8 +134,7 @@ catch (LLMException ex)
 ### Cancellation
 ```csharp
 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-var response = await client.GenerateTextAsync(
-    "You are a helpful assistant.",
+string response = await client.GenerateTextAsync(
     "What is the capital of France?",
     cts.Token
 );
@@ -160,7 +180,7 @@ var client = new LLMClient(new OpenAIProvider(
 // Gemini with custom endpoint
 var client = new LLMClient(new GeminiProvider(
     apiKey: "your-api-key",
-    model: "gemini-pro",
+    model: "gemini-2.0-flash",
     endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
 ));
 

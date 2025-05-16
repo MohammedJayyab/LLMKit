@@ -20,6 +20,9 @@ namespace LLMKit.Providers
         private bool _disposed;
         private const int MaxRetries = 3;
 
+        /// <summary>
+        /// Gets the endpoint URI for the LLM service.
+        /// </summary>
         public Uri Endpoint { get; protected set; }
 
         private static readonly TimeSpan[] RetryDelays = new[]
@@ -94,7 +97,7 @@ namespace LLMKit.Providers
         /// </summary>
         protected virtual object CreateRequestData(LLMRequest request)
         {
-            ArgumentNullException.ThrowIfNull(request, nameof(request)); // Null check added
+            ArgumentNullException.ThrowIfNull(request, nameof(request));
 
             return new
             {
@@ -134,7 +137,17 @@ namespace LLMKit.Providers
                     }
 
                     var response = await _httpClient.PostAsync(Endpoint, content, cancellationToken);
-                    response.EnsureSuccessStatusCode();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        if (attempt < MaxRetries)
+                        {
+                            continue;
+                        }
+
+                        response.EnsureSuccessStatusCode(); // Will throw appropriate exception
+                    }
+
                     return await response.Content.ReadAsStringAsync(cancellationToken);
                 }
                 catch (HttpRequestException) when (attempt < MaxRetries)
@@ -163,6 +176,8 @@ namespace LLMKit.Providers
         /// Must be implemented by concrete provider classes.
         /// </summary>
         public abstract Task<LLMResponse> GenerateTextAsync(LLMRequest request, CancellationToken cancellationToken = default);
+        
+        
 
         /// <summary>
         /// Creates a standardized exception with provider-specific context.

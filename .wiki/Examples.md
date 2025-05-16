@@ -14,10 +14,8 @@ using var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
 );
 
-string response = await client.GenerateTextAsync(
-    "You are a helpful assistant.",
-    "What is the capital of France?"
-);
+string response = await client.GenerateTextAsync("What is the capital of France?");
+Console.WriteLine(response);
 ```
 
 ### Conversation Management
@@ -26,13 +24,29 @@ using var client = new LLMClient(
     new OpenAIProvider("your-api-key", "gpt-3.5-turbo")
 );
 
-var conversation = client.StartConversation();
+// First message
+string response1 = await client.GenerateTextAsync("Hello, how are you?");
+Console.WriteLine(response1);
 
-await client.SendMessageAsync("Hello, how are you?");
-await client.SendMessageAsync("What's the weather like?");
-await client.SendMessageAsync("Tell me a joke");
+// Follow-up questions maintain conversation context automatically
+string response2 = await client.GenerateTextAsync("What's the weather like?");
+Console.WriteLine(response2);
 
+// Get the formatted conversation history
 string history = client.GetFormattedConversation();
+Console.WriteLine(history);
+
+// Clear the conversation if needed
+client.ClearConversation();
+```
+
+### Multimodal Support (Image + Text)
+```csharp
+// Generate a response to a message with an image
+string response = await client.GenerateTextWithImageAsync(
+    "What can you see in this image?", 
+    "path/to/your/image.jpg"
+);
 ```
 
 ## Advanced Usage
@@ -40,21 +54,27 @@ string history = client.GetFormattedConversation();
 ### Custom Parameters
 ```csharp
 var client = new LLMClient(
-    new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
-    defaultMaxTokens: 1000,
-    defaultTemperature: 0.7
+    provider: new OpenAIProvider("your-api-key", "gpt-3.5-turbo"),
+    maxTokens: 1000,
+    temperature: 0.7,
+    maxMessages: 20  // Store up to 20 messages in conversation history
 );
 ```
 
-### Custom Message Building
+### Setting a System Message
 ```csharp
-var builder = ChatMessageBuilder.Create()
-    .AddSystemMessage("You are a helpful assistant.")
-    .AddUserMessage("What is the capital of France?")
-    .AddAssistantMessage("The capital of France is Paris.")
-    .AddUserMessage("What is its population?");
+// Set or update the system message
+client.SetSystemMessage("You are a helpful assistant specialized in biology.");
+```
 
-var messages = builder.Build();
+### Building Messages Manually
+```csharp
+// Creating a chat message with text only
+var textMessage = new ChatMessage(ChatMessage.Roles.User, "What is the capital of France?");
+
+// Creating a chat message with text and image
+var multimodalMessage = new ChatMessage(ChatMessage.Roles.User, "What's in this image?");
+multimodalMessage.AddImage("path/to/image.jpg");
 ```
 
 ## Integration Examples
@@ -85,7 +105,7 @@ public class ChatController : ControllerBase
     {
         try
         {
-            var response = await _client.SendMessageAsync(request.Message);
+            var response = await _client.GenerateTextAsync(request.Message);
             return Ok(new { response });
         }
         catch (LLMException ex)
@@ -100,10 +120,8 @@ public class ChatController : ControllerBase
 ```csharp
 try
 {
-    var response = await client.GenerateTextAsync(
-        "You are a helpful assistant.",
-        "What is the capital of France?"
-    );
+    var response = await client.GenerateTextAsync("What is the capital of France?");
+    Console.WriteLine(response);
 }
 catch (LLMException ex)
 {
@@ -127,7 +145,6 @@ using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 try
 {
     var response = await client.GenerateTextAsync(
-        "You are a helpful assistant.",
         "What is the capital of France?",
         cts.Token
     );
@@ -153,7 +170,7 @@ var client = new LLMClient(
 var client = new LLMClient(
     new GeminiProvider(
         apiKey: "your-api-key",
-        model: "gemini-pro",
+        model: "gemini-2.0-flash",
         endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
     )
 );
@@ -184,10 +201,7 @@ public class LLMClientTests
         )).ReturnsAsync(new LLMResponse { Text = "Test response" });
 
         // Act
-        var response = await _client.GenerateTextAsync(
-            "System message",
-            "User message"
-        );
+        var response = await _client.GenerateTextAsync("Test message");
 
         // Assert
         Assert.Equal("Test response", response);

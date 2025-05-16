@@ -7,6 +7,7 @@ namespace LLMKit.Models
 
         public const string JsonContentType = "application/json";
         public const string JsonAccept = "application/json";
+        public const string SystemMessage = "You are a helpful assistant that can answer questions and help with tasks.";
 
         // Default Values
         public const double DefaultTemperature = 0.3;
@@ -14,7 +15,7 @@ namespace LLMKit.Models
         public const double DefaultTopP = 1.0;
         public const double DefaultFrequencyPenalty = 0.0;
         public const double DefaultPresencePenalty = 0.0;
-        public const int DefaultMaxTokens = 2024;
+        public const int DefaultMaxTokens = 4096;
         public const bool DefaultStream = false;
         public const int DefaultMaxMessages = 15;
 
@@ -27,6 +28,5 @@ namespace LLMKit.Models
         public const double MinPenalty = -2.0;
         public const double MaxPenalty = 2.0;
         public const int MinTokens = 1;
-        public const int MaxTokens = 4096;
     }
 }

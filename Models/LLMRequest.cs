@@ -159,7 +159,7 @@ namespace LLMKit.Models
             lock (_lock)
             {
                 _maxTokens = maxTokens.HasValue
-                    ? Math.Clamp(maxTokens.Value, Constants.MinTokens, Constants.MaxTokens)
+                    ? Math.Clamp(maxTokens.Value, Constants.MinTokens, Constants.DefaultMaxTokens)
                     : Constants.DefaultMaxTokens;
             }
             return this;

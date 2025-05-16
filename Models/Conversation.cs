@@ -8,7 +8,7 @@ namespace LLMKit.Models
     public class Conversation
     {
         private readonly List<ChatMessage> _messages = new();
-        private readonly int _maxMessages;
+        private int _maxMessages;
         private readonly string _id;
         private readonly object _lock = new();
 
@@ -102,24 +102,35 @@ namespace LLMKit.Models
             }
         }
 
+        public void UpdateMaxMessages(int newMaxMessages)
+        {
+            if (newMaxMessages <= 0)
+            {
+                throw new ArgumentException("Max messages must be greater than 0", nameof(newMaxMessages));
+            }
+
+            lock (_lock)
+            {
+                _maxMessages = newMaxMessages;
+                TrimHistory();
+            }
+        }
+
         private void TrimHistory()
         {
             if (_messages.Count <= _maxMessages) return;
 
             var systemMessages = _messages.Where(m => m.Role == ChatMessage.Roles.System).ToList();
-            var firstUserMessage = _messages.FirstOrDefault(m => m.Role == ChatMessage.Roles.User);
 
             var recentMessages = _messages
-                .Where(m => m.Role != ChatMessage.Roles.System && (firstUserMessage == null || m != firstUserMessage))
+                .Where(m => m.Role != ChatMessage.Roles.System)
                 .OrderByDescending(m => m.Timestamp)
-                .Take(_maxMessages - systemMessages.Count - (firstUserMessage != null ? 1 : 0))
+                .Take(_maxMessages - systemMessages.Count)
                 .OrderBy(m => m.Timestamp)
                 .ToList();
 
             _messages.Clear();
             _messages.AddRange(systemMessages);
-
-            if (firstUserMessage != null) _messages.Add(firstUserMessage);
             _messages.AddRange(recentMessages);
         }
     }
