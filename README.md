@@ -21,6 +21,12 @@ LLMKit is a thread-safe .NET library that provides a unified interface for inter
 - Cancellation token support
 - Custom endpoint support for all providers
 
+## ☕ Donate
+
+If you find this project helpful, consider buying me a coffee to support its development:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mjayyab)
+
 ## Installation
 
 ### Package Manager
@@ -211,8 +217,3 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 For issues or questions, please open an issue in the GitHub repository.
 
-## ☕ Donate
-
-If you find this project helpful, consider buying me a coffee to support its development:
-
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mjayyab)
