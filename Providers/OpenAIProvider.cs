@@ -34,7 +34,7 @@ namespace LLMKit.Providers
             {
                 model = Model,
                 messages = formattedMessages,
-                max_tokens = request.MaxTokens,
+                max_completion_tokens = request.MaxTokens,
                 temperature = request.Temperature,
                 top_p = request.TopP,
                 frequency_penalty = request.FrequencyPenalty,

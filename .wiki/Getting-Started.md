@@ -114,6 +114,49 @@ string response = await client.GenerateTextAsync(
 );
 ```
 
+## Supported Providers
+
+### OpenAI
+```csharp
+using var client = new LLMClient(
+    new OpenAIProvider(apiKey: "your-api-key", model: "gpt-3.5-turbo")
+);
+```
+
+### Gemini
+```csharp
+using var client = new LLMClient(
+    new GeminiProvider(apiKey: "your-api-key", model: "gemini-2.0-flash")
+);
+```
+
+### DeepSeek
+```csharp
+using var client = new LLMClient(
+    new DeepSeekProvider(apiKey: "your-api-key", model: "deepseek-chat")
+);
+```
+
+### LLM Studio (Local Models)
+```csharp
+// For local LLM Studio servers - API key is optional
+using var client = new LLMClient(
+    new LLMStudioProvider(
+        apiKey: null,  // Can be null for local servers without authentication
+        model: "glm-4.6v-flash"
+    )
+);
+
+// With custom endpoint
+using var client = new LLMClient(
+    new LLMStudioProvider(
+        apiKey: null,
+        model: "glm-4.6v-flash",
+        endpoint: new Uri("http://localhost:1234/v1/chat/completions")
+    )
+);
+```
+
 ## Next Steps
 
 - Check out our [Examples](Examples) page for more detailed usage scenarios

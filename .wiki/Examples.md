@@ -174,6 +174,44 @@ var client = new LLMClient(
         endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
     )
 );
+
+// LLM Studio (Local Models) with custom endpoint
+var client = new LLMClient(
+    new LLMStudioProvider(
+        apiKey: null,  // Optional for local servers
+        model: "glm-4.6v-flash",
+        endpoint: new Uri("http://localhost:1234/v1/chat/completions")
+    )
+);
+```
+
+## Local Model Support (LLM Studio)
+
+### Using Local LLM Models
+```csharp
+// Connect to a local LLM Studio server
+using var client = new LLMClient(
+    new LLMStudioProvider(
+        apiKey: null,  // No authentication needed for local servers
+        model: "glm-4.6v-flash"
+    )
+);
+
+// Use it just like any other provider
+string response = await client.GenerateTextAsync("What is the capital of France?");
+Console.WriteLine(response);
+```
+
+### Local Model with Custom Endpoint
+```csharp
+// If your LLM Studio server runs on a different port
+using var client = new LLMClient(
+    new LLMStudioProvider(
+        apiKey: null,
+        model: "glm-4.6v-flash",
+        endpoint: new Uri("http://localhost:8080/v1/chat/completions")
+    )
+);
 ```
 
 ## Testing Examples

@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/MohammedJayyab/LLMKit/wiki)
 [![Downloads](https://img.shields.io/nuget/dt/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 
-LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, and DeepSeek.
+LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, DeepSeek, and LLM Studio (local models).
 
 ## Features
 
@@ -172,6 +172,22 @@ var provider = new DeepSeekProvider(
 );
 ```
 
+### LLM Studio (Local Models)
+```csharp
+// For local LLM Studio servers (API key is optional)
+var provider = new LLMStudioProvider(
+    apiKey: null,  // Can be null for local servers without authentication
+    model: "glm-4.6v-flash"
+);
+
+// Or with a custom endpoint
+var provider = new LLMStudioProvider(
+    apiKey: null,
+    model: "glm-4.6v-flash",
+    endpoint: new Uri("http://localhost:1234/v1/chat/completions")
+);
+```
+
 ### Custom Endpoints
 Each provider supports custom endpoints. If not provided, the library will use the default endpoint for that provider.
 
@@ -195,6 +211,13 @@ var client = new LLMClient(new DeepSeekProvider(
     apiKey: "your-api-key",
     model: "deepseek-chat",
     endpoint: new Uri("https://api.deepseek.com/v1/chat/completions")
+));
+
+// LLM Studio with custom endpoint
+var client = new LLMClient(new LLMStudioProvider(
+    apiKey: null,
+    model: "glm-4.6v-flash",
+    endpoint: new Uri("http://localhost:1234/v1/chat/completions")
 ));
 ```
 

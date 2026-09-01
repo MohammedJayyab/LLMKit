@@ -264,7 +264,7 @@ namespace LLMKit
             }
             catch (Exception ex)
             {
-                throw new LLMException("Failed to generate text", ex);
+                throw new LLMException($"Failed to generate text: '{ex.Message}'", ex);
             }
         }
 
