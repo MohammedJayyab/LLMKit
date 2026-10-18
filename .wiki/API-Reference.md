@@ -12,13 +12,19 @@ public LLMClient(
     ILLMProvider provider,
     int maxTokens = Constants.DefaultMaxTokens,
     double temperature = Constants.DefaultTemperature,
-    int maxMessages = Constants.DefaultMaxMessages)
+    int maxMessages = Constants.DefaultMaxMessages,
+    ReasoningEffort? reasoningEffort = null)
 ```
+
+`reasoningEffort` sets how much the model reasons before answering. Null uses the model's default.
 
 ### Properties
 ```csharp
 public Conversation CurrentConversation { get; }
+public string? LastReasoning { get; }
 ```
+
+`LastReasoning` is the reasoning returned with the last response, or null if the provider returned none.
 
 ### Methods
 
@@ -45,6 +51,19 @@ public void SetSystemMessage(string? systemMessage = Constants.SystemMessage)
 ```
 Sets or updates the system message in the conversation.
 
+#### UpdateMaxMessages / GetMaxMessages
+```csharp
+public void UpdateMaxMessages(int maxMessages)
+public int GetMaxMessages()
+```
+Changes or reads the maximum number of messages kept in the conversation.
+
+#### GetAllSettings
+```csharp
+public string GetAllSettings()
+```
+Gets a formatted string with the current client settings.
+
 #### ClearConversation
 ```csharp
 public void ClearConversation()
@@ -65,7 +84,9 @@ Releases all resources used by the LLMClient.
 
 ## ILLMProvider
 
-Interface for LLM providers.
+Interface for LLM providers (it also implements `IDisposable`).
+
+Built-in implementations: `OpenAIProvider`, `AnthropicProvider`, `GeminiProvider`, `DeepSeekProvider` and `LLMStudioProvider`.
 
 ### Properties
 ```csharp
@@ -141,6 +162,7 @@ public class LLMRequest
     public double PresencePenalty { get; }
     public int MaxTokens { get; }
     public bool Stream { get; }
+    public ReasoningEffort? ReasoningEffort { get; }
 
     public LLMRequest WithMessages(IEnumerable<ChatMessage> messages)
     public LLMRequest WithTemperature(double? temperature)
@@ -149,14 +171,29 @@ public class LLMRequest
     public LLMRequest WithPresencePenalty(double? presencePenalty)
     public LLMRequest WithMaxTokens(int? maxTokens)
     public LLMRequest WithStream(bool? stream)
+    public LLMRequest WithReasoningEffort(ReasoningEffort? reasoningEffort)
 }
 ```
+
+### ReasoningEffort
+```csharp
+public enum ReasoningEffort
+{
+    None,
+    Low,
+    Medium,
+    High
+}
+```
+
+Each provider maps the value to its own setting. See [Getting Started](Getting-Started#reasoning--thinking).
 
 ### LLMResponse
 ```csharp
 public class LLMResponse
 {
     public string Text { get; set; }
+    public string? Reasoning { get; set; }
 }
 ```
 
@@ -191,12 +228,12 @@ public class LLMException : Exception
 public static class Constants
 {
     public const int DefaultMaxMessages = 15;
-    public const double DefaultTemperature = 0.7;
+    public const double DefaultTemperature = 0.3;
     public const double DefaultTopP = 1.0;
     public const double DefaultFrequencyPenalty = 0.0;
     public const double DefaultPresencePenalty = 0.0;
-    public const int DefaultMaxTokens = 2000;
+    public const int DefaultMaxTokens = 4096;
     public const bool DefaultStream = false;
-    public const string SystemMessage = "You are a helpful assistant.";
+    public const string SystemMessage = "You are a helpful assistant that can answer questions and help with tasks.";
 }
 ``` 

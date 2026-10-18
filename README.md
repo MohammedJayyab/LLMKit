@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/MohammedJayyab/LLMKit/wiki)
 [![Downloads](https://img.shields.io/nuget/dt/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
 
-LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Gemini, DeepSeek, and LLM Studio (local models).
+LLMKit is a thread-safe .NET library that provides a unified interface for interacting with various Large Language Models (LLMs) including OpenAI, Anthropic (Claude), Gemini, DeepSeek, and LLM Studio (local models).
 
 ## Features
 
@@ -14,6 +14,8 @@ LLMKit is a thread-safe .NET library that provides a unified interface for inter
 - Thread-safe implementation
 - Built-in conversation management (stores up to 15 messages by default)
 - ✨ **NEW!** Multimodal support (text + images)
+- ✨ **NEW!** Reasoning / thinking effort control and access to the returned reasoning
+- ✨ **NEW!** Anthropic (Claude) provider
 - Fluent API for message building
 - Configurable parameters (tokens, temperature, etc.)
 - Comprehensive error handling with automatic retries
@@ -146,6 +148,42 @@ string response = await client.GenerateTextAsync(
 );
 ```
 
+## Reasoning / Thinking
+
+Set how much a model should reason before answering. The same setting works for every provider
+and is mapped to the provider's own option. Leave it unset to use the model's default.
+
+```csharp
+using LLMKit.Models; // ReasoningEffort
+
+using var client = new LLMClient(
+    new GeminiProvider("your-api-key", "gemini-2.5-flash"),
+    reasoningEffort: ReasoningEffort.High
+);
+
+string answer = await client.GenerateTextAsync("Explain the Monty Hall problem.");
+string? reasoning = client.LastReasoning; // null if the provider returned none
+```
+
+When calling a provider directly, use `new LLMRequest().WithReasoningEffort(...)` and read
+`LLMResponse.Reasoning`.
+
+| Provider | Effort is sent as | Reasoning returned |
+|---|---|---|
+| OpenAI | `reasoning_effort` (reasoning models only) | No (Chat Completions does not return it) |
+| Anthropic | adaptive `thinking` plus `output_config.effort` | Yes, thought summaries |
+| Gemini | `thinking_budget` for 2.5 models, `thinking_level` for newer ones | Yes, thought summaries |
+| DeepSeek | `thinking` on/off plus `reasoning_effort` | Yes, `reasoning_content` |
+| LLM Studio | `reasoning_effort` | Yes, `reasoning` or `reasoning_content` |
+
+Notes:
+- Anthropic: `None` leaves thinking unset and uses `low` effort. Thinking is adaptive, which needs Claude 4.6 or later.
+- `None` turns reasoning off where the model allows it. Gemini 2.5 Pro and Gemini 3 models cannot
+  fully disable it, so `None` uses the lowest setting there.
+- Gemini 2.5 budgets: Low = 1024, Medium = 8192, High = 24576 tokens.
+- DeepSeek maps medium to high itself, and ignores sampling parameters while thinking.
+- LLM Studio's `reasoning_effort` support depends on the server version (0.4.8 or later) and model.
+
 ## Supported Providers
 
 ### OpenAI
@@ -155,6 +193,22 @@ var provider = new OpenAIProvider(
     model: "gpt-3.5-turbo"
 );
 ```
+
+**Reasoning models (GPT-5, o-series):** these models reject `temperature`, `top_p` and the penalty
+parameters, so LLMKit omits them automatically (unless the reasoning effort is `None`, GPT-5.1 and
+later). Reasoning tokens count against `maxTokens`, so use a generous value or the response text
+may come back empty. See [Reasoning / Thinking](#reasoning--thinking).
+
+### Anthropic (Claude)
+```csharp
+var provider = new AnthropicProvider(
+    apiKey: "your-api-key",
+    model: "claude-opus-5-5"
+);
+```
+
+Newer Claude models (Opus 4.7 and later, Sonnet 5, Fable, Haiku 5) reject `temperature`, so LLMKit
+omits it for them. Sampling parameters other than `temperature` are never sent to Anthropic.
 
 ### Gemini
 ```csharp
@@ -197,6 +251,13 @@ var client = new LLMClient(new OpenAIProvider(
     apiKey: "your-api-key",
     model: "gpt-3.5-turbo",
     endpoint: new Uri("https://api.openai.com/v1/chat/completions")
+));
+
+// Anthropic with custom endpoint
+var client = new LLMClient(new AnthropicProvider(
+    apiKey: "your-api-key",
+    model: "claude-opus-5-5",
+    endpoint: new Uri("https://api.anthropic.com/v1/messages")
 ));
 
 // Gemini with custom endpoint

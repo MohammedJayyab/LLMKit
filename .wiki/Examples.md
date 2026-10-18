@@ -126,12 +126,15 @@ try
 catch (LLMException ex)
 {
     Console.WriteLine($"Error: {ex.Message}");
+    // The message includes the provider's error response (for example an invalid model or parameter)
+
     // Handle specific error cases
-    if (ex.InnerException is HttpRequestException)
+    var inner = ex.GetBaseException();
+    if (inner is HttpRequestException http)
     {
-        // Handle network errors
+        // Handle HTTP and network errors (http.StatusCode is set when the server responded)
     }
-    else if (ex.InnerException is JsonException)
+    else if (inner is JsonException)
     {
         // Handle parsing errors
     }
@@ -166,6 +169,15 @@ var client = new LLMClient(
     )
 );
 
+// Anthropic with custom endpoint
+var client = new LLMClient(
+    new AnthropicProvider(
+        apiKey: "your-api-key",
+        model: "claude-opus-5-5",
+        endpoint: new Uri("https://api.anthropic.com/v1/messages")
+    )
+);
+
 // Gemini with custom endpoint
 var client = new LLMClient(
     new GeminiProvider(
@@ -182,6 +194,43 @@ var client = new LLMClient(
         model: "glm-4.6v-flash",
         endpoint: new Uri("http://localhost:1234/v1/chat/completions")
     )
+);
+```
+
+## Reasoning / Thinking
+
+### Setting the reasoning effort
+```csharp
+using LLMKit.Models; // ReasoningEffort
+
+using var client = new LLMClient(
+    new AnthropicProvider(apiKey: "your-api-key", model: "claude-opus-5-5"),
+    reasoningEffort: ReasoningEffort.High
+);
+
+string answer = await client.GenerateTextAsync("Explain the Monty Hall problem.");
+
+// The reasoning returned with the last response, or null if the provider returned none
+Console.WriteLine(client.LastReasoning);
+```
+
+### Calling a provider directly
+```csharp
+var request = new LLMRequest()
+    .WithMessages(messages)
+    .WithReasoningEffort(ReasoningEffort.Low);
+
+LLMResponse response = await provider.GenerateTextAsync(request);
+Console.WriteLine(response.Text);
+Console.WriteLine(response.Reasoning);
+```
+
+### Turning reasoning off on OpenAI
+```csharp
+// With effort None, GPT-5.1 and later accept temperature and the other sampling parameters again
+using var client = new LLMClient(
+    new OpenAIProvider(apiKey: "your-api-key", model: "gpt-5.2"),
+    reasoningEffort: ReasoningEffort.None
 );
 ```
 

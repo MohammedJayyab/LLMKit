@@ -19,5 +19,6 @@
 
 - [.NET Documentation](https://docs.microsoft.com/en-us/dotnet/)
 - [OpenAI API](https://platform.openai.com/docs/api-reference)
+- [Anthropic API](https://docs.anthropic.com/)
 - [Google AI](https://ai.google.dev/)
 - [DeepSeek API](https://platform.deepseek.com/) 

@@ -123,6 +123,13 @@ using var client = new LLMClient(
 );
 ```
 
+### Anthropic (Claude)
+```csharp
+using var client = new LLMClient(
+    new AnthropicProvider(apiKey: "your-api-key", model: "claude-opus-5-5")
+);
+```
+
 ### Gemini
 ```csharp
 using var client = new LLMClient(
@@ -156,6 +163,45 @@ using var client = new LLMClient(
     )
 );
 ```
+
+## Reasoning / Thinking
+
+Set how much a model should reason before answering. The same setting works for every provider and
+is mapped to the provider's own option. Leave it unset to use the model's default.
+
+```csharp
+using LLMKit.Models; // ReasoningEffort
+
+using var client = new LLMClient(
+    new GeminiProvider(apiKey: "your-api-key", model: "gemini-2.5-flash"),
+    reasoningEffort: ReasoningEffort.High
+);
+
+string answer = await client.GenerateTextAsync("Explain the Monty Hall problem.");
+string? reasoning = client.LastReasoning; // null if the provider returned none
+```
+
+| Provider | Effort is sent as | Reasoning returned |
+|---|---|---|
+| OpenAI | `reasoning_effort` (reasoning models only) | No (Chat Completions does not return it) |
+| Anthropic | adaptive `thinking` plus `output_config.effort` | Yes, thought summaries |
+| Gemini | `thinking_budget` for 2.5 models, `thinking_level` for newer ones | Yes, thought summaries |
+| DeepSeek | `thinking` on/off plus `reasoning_effort` | Yes, `reasoning_content` |
+| LLM Studio | `reasoning_effort` | Yes, `reasoning` or `reasoning_content` |
+
+When calling a provider directly, use `new LLMRequest().WithReasoningEffort(...)` and read
+`LLMResponse.Reasoning`.
+
+Notes:
+- Reasoning models (GPT-5, o-series) reject `temperature`, `top_p` and the penalty parameters, so
+  LLMKit omits them automatically (unless the reasoning effort is `None`, GPT-5.1 and later).
+  Reasoning tokens count against `maxTokens`, so use a generous value.
+- Anthropic: `None` leaves thinking unset and uses `low` effort. Thinking is adaptive, which needs Claude 4.6 or later.
+- `None` turns reasoning off where the model allows it. Gemini 2.5 Pro and Gemini 3 models cannot
+  fully disable it, so `None` uses the lowest setting there.
+- Gemini 2.5 budgets: Low = 1024, Medium = 8192, High = 24576 tokens.
+- DeepSeek maps medium to high itself, and ignores sampling parameters while thinking.
+- LLM Studio's `reasoning_effort` support depends on the server version (0.4.8 or later) and model.
 
 ## Next Steps
 

@@ -11,9 +11,8 @@ The main entry point for interacting with LLM providers.
 public class LLMClient : IDisposable
 {
     private readonly ILLMProvider _provider;
-    private readonly ConversationService _conversationService;
     private readonly object _conversationLock = new();
-    private Conversation? _currentConversation;
+    private Conversation _currentConversation;
     // ...
 }
 ```
@@ -22,6 +21,7 @@ Key responsibilities:
 - Managing conversations
 - Handling text generation requests
 - Managing provider interactions
+- Passing the reasoning effort to the provider and exposing the last reasoning (`LastReasoning`)
 - Thread safety
 - Resource disposal
 
@@ -29,7 +29,7 @@ Key responsibilities:
 Abstract interface and implementations for different LLM providers.
 
 ```csharp
-public interface ILLMProvider
+public interface ILLMProvider : IDisposable
 {
     Uri Endpoint { get; }
     Task<LLMResponse> GenerateTextAsync(LLMRequest request, CancellationToken cancellationToken = default);
@@ -38,17 +38,25 @@ public interface ILLMProvider
 
 Supported providers:
 - OpenAI
+- Anthropic (Claude)
 - Gemini
 - DeepSeek
+- LLM Studio (local models)
+
+All providers derive from `BaseLLMProvider`, which provides the shared HTTP client and, for every
+provider except Gemini, retries with backoff (network errors, 408, 429 and 5xx) and error handling. Each provider maps
+`LLMRequest` (including `ReasoningEffort`) to its own request format and fills `LLMResponse`
+(including `Reasoning` when the provider returns it).
 
 ### 3. Conversation Management
-Internal service for managing conversation state and message history.
+The `Conversation` class manages conversation state and message history, up to a maximum number of messages.
 
 ```csharp
-internal class ConversationService
+public class Conversation
 {
-    public Conversation CreateConversation(int maxMessages)
-    public void AddMessage(Conversation conversation, string role, string content)
+    public Conversation(int maxMessages)
+    public void AddMessage(string role, string content)
+    public void Clear()
 }
 ```
 
@@ -97,11 +105,11 @@ internal sealed class ChatMessageBuilder
 classDiagram
     class LLMClient {
         -ILLMProvider _provider
-        -ConversationService _conversationService
         -Conversation _currentConversation
-        +StartConversation()
+        +LastReasoning
         +GenerateTextAsync()
-        +SendMessageAsync()
+        +GenerateTextWithImageAsync()
+        +ClearConversation()
         +Dispose()
     }
     
@@ -111,9 +119,9 @@ classDiagram
         +GenerateTextAsync()
     }
     
-    class ConversationService {
-        +CreateConversation()
+    class Conversation {
         +AddMessage()
+        +Clear()
     }
     
     class ChatMessageBuilder {
@@ -125,15 +133,16 @@ classDiagram
     }
     
     LLMClient --> ILLMProvider
-    LLMClient --> ConversationService
+    LLMClient --> Conversation
     LLMClient ..> ChatMessageBuilder
 ```
 
 ## Extension Points
 
 1. **New Providers**
-   - Implement `ILLMProvider`
+   - Derive from `BaseLLMProvider` (or implement `ILLMProvider`)
    - Add provider-specific request/response models
+   - Map `LLMRequest.ReasoningEffort` and fill `LLMResponse.Reasoning` if the provider supports reasoning
    - Register in DI container
 
 2. **Message Building**

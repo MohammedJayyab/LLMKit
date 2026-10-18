@@ -13,9 +13,10 @@ LLMKit is a powerful, thread-safe .NET library that provides a unified interface
 
 ## Key Features
 
-- **Unified Interface**: Seamlessly work with multiple LLM providers (OpenAI, Gemini, DeepSeek)
+- **Unified Interface**: Seamlessly work with multiple LLM providers (OpenAI, Anthropic, Gemini, DeepSeek, LLM Studio)
 - **Thread Safety**: Built with thread safety in mind for concurrent operations
 - **Conversation Management**: Robust conversation handling with history (stores up to 15 messages by default)
+- **Reasoning Support**: One setting to control reasoning/thinking effort across providers, and access to the returned reasoning
 - **Multimodal Support**: Send images along with text to compatible LLM providers
 - **Fluent API**: Intuitive message building interface
 - **Dependency Injection**: Native support for DI containers
@@ -25,7 +26,7 @@ LLMKit is a powerful, thread-safe .NET library that provides a unified interface
 
 ## Project Status
 
-- **Current Version**: 3.0.0
+- **Current Version**: 3.2.0
 - **Status**: Active Development
 - **Target Framework**: .NET 8.0+
 - **License**: MIT

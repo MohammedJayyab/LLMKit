@@ -2,7 +2,7 @@
 
 This document outlines potential future improvements for LLMKit.
 
-## 🎯 Current Version (3.0.0)
+## 🎯 Current Version (3.2.0)
  
 Current features include:
 - ✅ Unified interface for multiple LLM providers
@@ -16,7 +16,9 @@ Current features include:
 - ✅ Custom endpoint support for all providers
 - ✅ Multimodal support (text + images)
 - ✅ System message configuration
-- ✅ Automatic retries for failed requests
+- ✅ Automatic retries for failed requests (network errors, 408, 429 and 5xx)
+- ✅ Providers: OpenAI, Anthropic (Claude), Gemini, DeepSeek and LLM Studio (local models)
+- ✅ Reasoning / thinking effort control across providers, with access to the returned reasoning
 
 ## 📈 Planned Improvements
 
@@ -25,7 +27,9 @@ Potential enhancements being considered:
 ### Core Features
 - Message streaming support
 - Enhanced error handling and logging
-- Additional provider support
+- Additional provider support (for example Azure OpenAI, Mistral, Ollama)
+- Responses API support for OpenAI
+- Token usage and finish reason on responses
 - Performance optimizations
 - Retry policies with configurable strategies
 - Memory usage optimizations

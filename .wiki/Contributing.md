@@ -59,17 +59,22 @@ Thank you for your interest in contributing to LLMKit! This document provides gu
 
 ## Adding New Providers
 
-1. Create a new provider class implementing `ILLMProvider`
+1. Create a new provider class deriving from `BaseLLMProvider` (it provides the shared HTTP client, retries and error handling)
 2. Add provider-specific request/response models
-3. Implement provider-specific API calls
+3. Override `CreateRequestData` and `GenerateTextAsync`. Map `LLMRequest` (including `ReasoningEffort`) and fill `LLMResponse` (including `Reasoning` if the provider returns it)
 4. Add unit tests
-5. Update documentation
+5. Update documentation (README, wiki and the release notes in `LLMKit.csproj`)
 
 Example:
 ```csharp
-public class NewProvider : ILLMProvider
+public class NewProvider : BaseLLMProvider
 {
-    public async Task<LLMResponse> GenerateTextAsync(
+    public NewProvider(string apiKey, string model, Uri? endpoint = null)
+        : base(apiKey, model, endpoint ?? new Uri("https://api.example.com/v1/chat"))
+    {
+    }
+
+    public override async Task<LLMResponse> GenerateTextAsync(
         LLMRequest request,
         CancellationToken cancellationToken = default)
     {
