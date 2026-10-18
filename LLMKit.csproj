@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>LLMKit</PackageId>
-		<Version>3.2.0</Version>
+		<Version>3.2.1</Version>
 		<Authors>Mohammed Abujayyab</Authors>
 		<Company></Company>
 		<Description>A library for orchestrating interactions with various Large Language Models (LLMs).</Description>
@@ -17,7 +17,10 @@
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>images/LLMKit.png</PackageIcon>
-		<PackageReleaseNotes>Version 3.2.0:
+		<PackageReleaseNotes>Version 3.2.1:
+- Rebuilt package: the 3.1.0 and 3.2.0 packages on NuGet contained the 3.0.0 binary by mistake. 3.2.1 contains all the changes listed below for 3.1.0 and 3.2.0
+
+Version 3.2.0:
 - Added AnthropicProvider for Claude models (Messages API)
 - Added provider-neutral ReasoningEffort (LLMRequest.WithReasoningEffort and the LLMClient reasoningEffort argument) for OpenAI, Anthropic, Gemini, DeepSeek and LLM Studio
 - Added LLMResponse.Reasoning and LLMClient.LastReasoning to read the reasoning returned by the provider

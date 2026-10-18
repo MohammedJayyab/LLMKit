@@ -2,7 +2,7 @@
 
 This document outlines potential future improvements for LLMKit.
 
-## 🎯 Current Version (3.2.0)
+## 🎯 Current Version (3.2.1)
  
 Current features include:
 - ✅ Unified interface for multiple LLM providers
