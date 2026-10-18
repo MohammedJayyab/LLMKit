@@ -140,17 +140,22 @@ namespace LLMKit.Providers
 
                     if (!response.IsSuccessStatusCode)
                     {
-                        if (attempt < MaxRetries)
+                        if (attempt < MaxRetries && IsRetryable(response.StatusCode))
                         {
                             continue;
                         }
 
-                        response.EnsureSuccessStatusCode(); // Will throw appropriate exception
+                        // Include the response body, it usually names the rejected parameter
+                        var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                        throw new HttpRequestException(
+                            $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}",
+                            null,
+                            response.StatusCode);
                     }
 
                     return await response.Content.ReadAsStringAsync(cancellationToken);
                 }
-                catch (HttpRequestException) when (attempt < MaxRetries)
+                catch (HttpRequestException ex) when (attempt < MaxRetries && IsRetryable(ex.StatusCode))
                 {
                     continue;
                 }
@@ -164,11 +169,24 @@ namespace LLMKit.Providers
                 }
                 catch (Exception ex) when (attempt == MaxRetries)
                 {
-                    throw CreateProviderException($"Request failed after {MaxRetries} attempts", ex);
+                    throw CreateProviderException($"Request failed after {MaxRetries} attempts: {ex.Message}", ex);
                 }
             }
 
             throw new LLMException("Unexpected error in retry logic");
+        }
+
+        /// <summary>
+        /// Determines whether a failed request is worth retrying.
+        /// Network errors (no status code), timeouts, rate limits and server errors are; other 4xx are not.
+        /// </summary>
+        private static bool IsRetryable(System.Net.HttpStatusCode? statusCode)
+        {
+            if (statusCode == null)
+                return true;
+
+            int code = (int)statusCode.Value;
+            return code == 408 || code == 429 || code >= 500;
         }
 
         /// <summary>
