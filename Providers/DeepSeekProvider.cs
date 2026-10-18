@@ -39,7 +39,14 @@ namespace LLMKit.Providers
                 top_p = request.TopP,
                 frequency_penalty = request.FrequencyPenalty,
                 presence_penalty = request.PresencePenalty,
-                stream = request.Stream
+                stream = request.Stream,
+                // None turns thinking off; other levels turn it on at that effort
+                thinking = request.ReasoningEffort.HasValue
+                    ? new { type = request.ReasoningEffort == ReasoningEffort.None ? "disabled" : "enabled" }
+                    : null,
+                reasoning_effort = request.ReasoningEffort is { } effort && effort != ReasoningEffort.None
+                    ? effort.ToApiValue()
+                    : null
             };
         }
 
@@ -85,7 +92,7 @@ namespace LLMKit.Providers
             }
             catch (HttpRequestException ex)
             {
-                throw CreateProviderException("Network error occurred.", ex);
+                throw CreateProviderException($"Network error occurred: {ex.Message}", ex);
             }
             catch (JsonException ex)
             {
@@ -93,7 +100,7 @@ namespace LLMKit.Providers
             }
             catch (Exception ex)
             {
-                throw CreateProviderException("An unexpected error occurred.", ex);
+                throw CreateProviderException($"An unexpected error occurred: {ex.Message}", ex);
             }
         }
 
@@ -106,9 +113,12 @@ namespace LLMKit.Providers
                 return new LLMResponse { Text = string.Empty };
             }
 
+            var message = responseObject!.choices[0].message;
+
             return new LLMResponse
             {
-                Text = responseObject!.choices[0].message.content?.Trim() ?? string.Empty
+                Text = message.content?.Trim() ?? string.Empty,
+                Reasoning = string.IsNullOrWhiteSpace(message.reasoning_content) ? null : message.reasoning_content.Trim()
             };
         }
 

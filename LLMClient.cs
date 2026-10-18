@@ -17,7 +17,14 @@ namespace LLMKit
         private readonly int _maxTokens;
         private int _maxMessages;
         private readonly double _temperature;
+        private readonly ReasoningEffort? _reasoningEffort;
+        private string? _lastReasoning;
         private bool _disposed;
+
+        /// <summary>
+        /// Gets the reasoning returned with the last response, or null if the provider returned none.
+        /// </summary>
+        public string? LastReasoning => Volatile.Read(ref _lastReasoning);
 
         /// <summary>
         /// Gets the current conversation.
@@ -39,17 +46,21 @@ namespace LLMKit
         /// <param name="provider">The LLM provider to use.</param>
         /// <param name="maxTokens">Maximum tokens. Defaults to Constants.DefaultMaxTokens.</param>
         /// <param name="temperature">Temperature. Defaults to Constants.DefaultTemperature.</param>
+        /// <param name="maxMessages">Maximum messages kept in the conversation.</param>
+        /// <param name="reasoningEffort">Reasoning effort. Null uses the model's default.</param>
         public LLMClient(
             ILLMProvider provider,
             int maxTokens = Constants.DefaultMaxTokens,
             double temperature = Constants.DefaultTemperature,
-             int maxMessages = Constants.DefaultMaxMessages
+             int maxMessages = Constants.DefaultMaxMessages,
+            ReasoningEffort? reasoningEffort = null
             )
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             _maxTokens = maxTokens;
             _temperature = temperature;
             _maxMessages = maxMessages;
+            _reasoningEffort = reasoningEffort;
             _currentConversation = new Conversation(maxMessages);
 
             // Initialize with system message
@@ -256,9 +267,11 @@ namespace LLMKit
                 var request = new LLMRequest()
                     .WithMessages(messages)
                     .WithMaxTokens(_maxTokens)
-                    .WithTemperature(_temperature);
+                    .WithTemperature(_temperature)
+                    .WithReasoningEffort(_reasoningEffort);
 
                 var response = await _provider.GenerateTextAsync(request, cancellationToken);
+                Volatile.Write(ref _lastReasoning, response.Reasoning);
 
                 return response.Text;
             }

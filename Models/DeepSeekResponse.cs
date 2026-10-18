@@ -15,5 +15,7 @@ namespace LLMKit.Models
     public class Message
     {
         public string content { get; set; } = string.Empty;
+
+        public string? reasoning_content { get; set; }
     }
 }

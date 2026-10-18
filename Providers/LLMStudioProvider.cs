@@ -52,7 +52,8 @@ namespace LLMKit.Providers
                 top_p = request.TopP,
                 frequency_penalty = request.FrequencyPenalty,
                 presence_penalty = request.PresencePenalty,
-                stream = request.Stream
+                stream = request.Stream,
+                reasoning_effort = request.ReasoningEffort?.ToApiValue()
             };
         }
 
@@ -179,9 +180,13 @@ namespace LLMKit.Providers
                 return new LLMResponse { Text = string.Empty };
             }
 
+            var message = responseObject!.choices[0].message;
+            var reasoning = message.reasoning ?? message.reasoning_content;
+
             return new LLMResponse
             {
-                Text = responseObject!.choices[0].message.content?.Trim() ?? string.Empty
+                Text = message.content?.Trim() ?? string.Empty,
+                Reasoning = string.IsNullOrWhiteSpace(reasoning) ? null : reasoning.Trim()
             };
         }
 

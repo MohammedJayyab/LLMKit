@@ -15,6 +15,11 @@ namespace LLMKit.Models
         public class Message
         {
             public string content { get; set; } = string.Empty;
+
+            // Reasoning text is exposed as "reasoning" or "reasoning_content" depending on the LLM Studio version
+            public string? reasoning { get; set; }
+
+            public string? reasoning_content { get; set; }
         }
     }
 }

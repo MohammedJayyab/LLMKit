@@ -16,6 +16,7 @@ namespace LLMKit.Models
         private double _presencePenalty;
         private int _maxTokens;
         private bool _stream;
+        private ReasoningEffort? _reasoningEffort;
 
         /// <summary>
         /// Gets the list of chat messages in read-only format.
@@ -119,6 +120,20 @@ namespace LLMKit.Models
                 lock (_lock)
                 {
                     return _stream;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the requested reasoning effort, or null to use the model's default.
+        /// </summary>
+        public ReasoningEffort? ReasoningEffort
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _reasoningEffort;
                 }
             }
         }
@@ -239,6 +254,20 @@ namespace LLMKit.Models
             lock (_lock)
             {
                 _stream = stream ?? Constants.DefaultStream;
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Sets how much reasoning the model should do. Null uses the model's default.
+        /// </summary>
+        /// <param name="reasoningEffort">The reasoning effort.</param>
+        /// <returns>The current instance for method chaining.</returns>
+        public LLMRequest WithReasoningEffort(ReasoningEffort? reasoningEffort)
+        {
+            lock (_lock)
+            {
+                _reasoningEffort = reasoningEffort;
             }
             return this;
         }

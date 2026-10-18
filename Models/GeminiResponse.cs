@@ -17,6 +17,8 @@
 
     public class Part
     {
-        public string text { get; set; }
+        public string? text { get; set; }
+
+        public bool thought { get; set; }
     }
 }

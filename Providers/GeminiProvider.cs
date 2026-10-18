@@ -97,13 +97,7 @@ namespace LLMKit.Providers
             var requestObject = new Dictionary<string, object>
             {
                 { "contents", contents },
-                { "generation_config", new Dictionary<string, object>
-                    {
-                        { "temperature", request.Temperature },
-                        { "top_p", request.TopP },
-                        { "max_output_tokens", request.MaxTokens }
-                    }
-                }
+                { "generation_config", CreateGenerationConfig(request) }
             };
             
             if (!string.IsNullOrEmpty(systemMessage))
@@ -165,13 +159,7 @@ namespace LLMKit.Providers
             var requestObject = new Dictionary<string, object>
             {
                 { "contents", contents },
-                { "generation_config", new Dictionary<string, object>
-                    {
-                        { "temperature", request.Temperature },
-                        { "top_p", request.TopP },
-                        { "max_output_tokens", request.MaxTokens }
-                    }
-                }
+                { "generation_config", CreateGenerationConfig(request) }
             };
             
             if (!string.IsNullOrEmpty(systemMessage))
@@ -189,6 +177,46 @@ namespace LLMKit.Providers
             return requestObject;
         }
         
+        private Dictionary<string, object> CreateGenerationConfig(LLMRequest request)
+        {
+            var config = new Dictionary<string, object>
+            {
+                { "temperature", request.Temperature },
+                { "top_p", request.TopP },
+                { "max_output_tokens", request.MaxTokens }
+            };
+
+            if (request.ReasoningEffort is { } effort)
+            {
+                var thinkingConfig = new Dictionary<string, object>();
+
+                // Gemini 2.5 takes a token budget, newer models take a level (sending both is an error on some)
+                if (Model.StartsWith("gemini-2.5", StringComparison.OrdinalIgnoreCase))
+                {
+                    thinkingConfig["thinking_budget"] = effort switch
+                    {
+                        ReasoningEffort.None => 0,
+                        ReasoningEffort.Low => 1024,
+                        ReasoningEffort.Medium => 8192,
+                        _ => 24576
+                    };
+                }
+                else
+                {
+                    thinkingConfig["thinking_level"] = effort == ReasoningEffort.None ? "minimal" : effort.ToApiValue();
+                }
+
+                if (effort != ReasoningEffort.None)
+                {
+                    thinkingConfig["include_thoughts"] = true;
+                }
+
+                config["thinking_config"] = thinkingConfig;
+            }
+
+            return config;
+        }
+
         private void AddImagePart(List<Dictionary<string, object>> parts, MessageContent item)
         {
             string url = item.ImageUrl!;
@@ -345,9 +373,13 @@ namespace LLMKit.Providers
                 return new LLMResponse { Text = string.Empty };
             }
 
+            var parts = responseObject!.candidates[0].content.parts;
+            var reasoning = string.Concat(parts.Where(p => p.thought).Select(p => p.text)).Trim();
+
             return new LLMResponse
             {
-                Text = responseObject!.candidates[0].content.parts[0].text?.Trim() ?? string.Empty
+                Text = string.Concat(parts.Where(p => !p.thought).Select(p => p.text)).Trim(),
+                Reasoning = reasoning.Length > 0 ? reasoning : null
             };
             }
             catch (Exception ex)

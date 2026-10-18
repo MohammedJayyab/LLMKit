@@ -11,6 +11,7 @@ namespace LLMKit.Providers
     public class OpenAIProvider : BaseLLMProvider
     {
         private static readonly Uri DefaultEndpoint = new("https://api.openai.com/v1/chat/completions");
+        private static readonly string[] ReasoningModelPrefixes = { "gpt-5", "o1", "o3", "o4" };
 
         public OpenAIProvider(string apiKey, string model, Uri? endpoint = null)
             : base(apiKey, model, endpoint ?? DefaultEndpoint)
@@ -30,17 +31,32 @@ namespace LLMKit.Providers
 
             var formattedMessages = request.Messages.Select(FormatChatMessage).ToList();
 
+            // Reasoning models reject sampling parameters unless reasoning is off; nulls are omitted when serializing
+            bool isReasoningModel = IsReasoningModel(Model);
+            bool supportsSampling = !isReasoningModel || request.ReasoningEffort == ReasoningEffort.None;
+
             return new
             {
                 model = Model,
                 messages = formattedMessages,
                 max_completion_tokens = request.MaxTokens,
-                temperature = request.Temperature,
-                top_p = request.TopP,
-                frequency_penalty = request.FrequencyPenalty,
-                presence_penalty = request.PresencePenalty,
+                reasoning_effort = isReasoningModel ? request.ReasoningEffort?.ToApiValue() : null,
+                temperature = supportsSampling ? request.Temperature : (double?)null,
+                top_p = supportsSampling ? request.TopP : (double?)null,
+                frequency_penalty = supportsSampling ? request.FrequencyPenalty : (double?)null,
+                presence_penalty = supportsSampling ? request.PresencePenalty : (double?)null,
                 stream = request.Stream
             };
+        }
+
+        private static bool IsReasoningModel(string model)
+        {
+            var name = model.ToLowerInvariant();
+
+            if (name.StartsWith("gpt-5-chat", StringComparison.Ordinal))
+                return false;
+
+            return ReasoningModelPrefixes.Any(p => name.StartsWith(p, StringComparison.Ordinal));
         }
 
         private object FormatChatMessage(ChatMessage message)
@@ -145,7 +161,7 @@ namespace LLMKit.Providers
             }
             catch (HttpRequestException ex)
             {
-                throw CreateProviderException("Network error occurred.", ex);
+                throw CreateProviderException($"Network error occurred: {ex.Message}", ex);
             }
             catch (JsonException ex)
             {
@@ -153,7 +169,7 @@ namespace LLMKit.Providers
             }
             catch (Exception ex)
             {
-                throw CreateProviderException("An unexpected error occurred.", ex);
+                throw CreateProviderException($"An unexpected error occurred: {ex.Message}", ex);
             }
         }
 
