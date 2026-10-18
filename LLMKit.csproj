@@ -6,18 +6,26 @@
 		<Nullable>enable</Nullable>
 
 		<PackageId>LLMKit</PackageId>
-		<Version>3.1.0</Version>
+		<Version>3.2.0</Version>
 		<Authors>Mohammed Abujayyab</Authors>
 		<Company></Company>
 		<Description>A library for orchestrating interactions with various Large Language Models (LLMs).</Description>
-		<PackageTags>LLM, Orchestrator, OpenAI, Gemini, DeepSeek, LLM Studio, AI, Language Model</PackageTags>
+		<PackageTags>LLM, Orchestrator, OpenAI, Anthropic, Claude, Gemini, DeepSeek, LLM Studio, AI, Language Model</PackageTags>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<RepositoryUrl>https://github.com/MohammedJayyab/LLMKit</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>images/LLMKit.png</PackageIcon>
-		<PackageReleaseNotes>Version 3.1.0:
+		<PackageReleaseNotes>Version 3.2.0:
+- Added AnthropicProvider for Claude models (Messages API)
+- Added provider-neutral ReasoningEffort (LLMRequest.WithReasoningEffort and the LLMClient reasoningEffort argument) for OpenAI, Anthropic, Gemini, DeepSeek and LLM Studio
+- Added LLMResponse.Reasoning and LLMClient.LastReasoning to read the reasoning returned by the provider
+- OpenAI: sampling parameters (temperature, top_p, penalties) are no longer sent to GPT-5 and o-series reasoning models, which reject them
+- Gemini: thought summaries are separated from the answer text
+- Permanent 4xx errors are no longer retried, and the API error response is included in the exception message
+
+Version 3.1.0:
 - Added LLMStudioProvider for local LLM Studio servers (OpenAI-compatible API, optional API key)
 - Fixed OpenAI request payload to use max_completion_tokens
 - Improved error detail in generated text failure exceptions
