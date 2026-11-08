@@ -1,0 +1,100 @@
+# Builds, tests and packs LLMKit on every pull request to master and every push (merge) to master.
+# release.yml runs the same job before it publishes a version to NuGet.
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_call:
+    outputs:
+      version:
+        description: The package version (<Version> in LLMKit.csproj)
+        value: ${{ jobs.build.outputs.version }}
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build, test and pack
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore LLMKit.sln
+
+      # Warnings fail the build, so the solution stays at 0 warnings
+      - name: Build
+        run: dotnet build LLMKit.sln -c Release --no-restore -warnaserror -p:ContinuousIntegrationBuild=true
+
+      - name: Test
+        run: dotnet test LLMKit.sln -c Release --no-build --logger trx --results-directory TestResults
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults
+          if-no-files-found: ignore
+
+      - name: Pack
+        run: dotnet pack src/LLMKit/LLMKit.csproj -c Release -o artifacts -p:ContinuousIntegrationBuild=true
+
+      - name: Verify package
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+
+          version=$(grep -oPm1 '(?<=<Version>)[^<]+' src/LLMKit/LLMKit.csproj) || fail "No <Version> in src/LLMKit/LLMKit.csproj"
+          nupkg="artifacts/LLMKit.$version.nupkg"
+          snupkg="artifacts/LLMKit.$version.snupkg"
+          [ -f "$nupkg" ] || fail "$nupkg was not created"
+          [ -f "$snupkg" ] || fail "$snupkg was not created"
+
+          # A release tag must match the version in the csproj (checked before anything is published)
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            fail "Tag $GITHUB_REF_NAME does not match <Version>$version</Version> in LLMKit.csproj (expected tag v$version)"
+          fi
+
+          contents=$(unzip -Z1 "$nupkg")
+          for file in LLMKit.nuspec lib/net8.0/LLMKit.dll lib/net8.0/LLMKit.xml README.md images/LLMKit.png; do
+            grep -qxF "$file" <<< "$contents" || fail "$file is missing from $nupkg"
+          done
+          unzip -Z1 "$snupkg" | grep -qxF lib/net8.0/LLMKit.pdb || fail "lib/net8.0/LLMKit.pdb is missing from $snupkg"
+          unzip -p "$nupkg" LLMKit.nuspec | grep -qF "<version>$version</version>" || fail "The nuspec version is not $version"
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Package LLMKit $version verified" >> "$GITHUB_STEP_SUMMARY"
+          ls -l artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
