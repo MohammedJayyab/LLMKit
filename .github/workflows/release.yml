@@ -1,0 +1,71 @@
+# Publishes LLMKit to NuGet when a version tag is pushed, for example:
+#   git tag v4.0.0
+#   git push origin v4.0.0
+# The tag must match <Version> in src/LLMKit/LLMKit.csproj. Publishing waits for an approval
+# in the "nuget" environment and uses NuGet Trusted Publishing (no API key is stored in GitHub).
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to NuGet
+    needs: build
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      contents: write   # create the GitHub release
+      id-token: write   # NuGet Trusted Publishing
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: artifacts
+
+      - name: NuGet login (Trusted Publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      # The .snupkg next to the .nupkg is pushed to the NuGet symbol server automatically
+      - name: Push to NuGet
+        run: >
+          dotnet nuget push "artifacts/LLMKit.$VERSION.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+
+      # Release notes: the section for this version from <PackageReleaseNotes>
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          unzip -p "artifacts/LLMKit.$VERSION.nupkg" LLMKit.nuspec \
+            | awk '/<releaseNotes>/ { on = 1; sub(/.*<releaseNotes>/, ""); first = 1 }
+                   on && !first && /^Version [0-9]/ { exit }
+                   on { sub(/<\/releaseNotes>.*/, ""); print; first = 0 }' \
+            | sed -e 's/&lt;/</g' -e 's/&gt;/>/g' -e 's/&quot;/"/g' -e "s/&apos;/'/g" -e 's/&amp;/\&/g' \
+            > notes.md
+          echo "NuGet: https://www.nuget.org/packages/LLMKit/$VERSION" >> notes.md
+          gh release create "$TAG" artifacts/*.nupkg artifacts/*.snupkg \
+            --title "LLMKit $VERSION" --notes-file notes.md --verify-tag

@@ -73,6 +73,13 @@ var client = new LLMClient(
 );
 ```
 
+`maxTokens` is the maximum length of each response: the reasoning plus the answer. Your question and
+the conversation history are not counted. The default is 4096. LLMKit has no upper limit, so you can
+set what the model allows (for example 16000 or 32000); a value above the model's limit is rejected by
+the provider with an error. A higher value lets reasoning models think without leaving the answer
+empty, but long responses take longer: requests time out after 3 minutes (OpenAI, Anthropic,
+DeepSeek), 2 minutes (Gemini) or 60 seconds (LLM Studio).
+
 ### Setting a System Message
 ```csharp
 // Set or update the system message
@@ -133,14 +140,14 @@ using var client = new LLMClient(
 ### Gemini
 ```csharp
 using var client = new LLMClient(
-    new GeminiProvider(apiKey: "your-api-key", model: "gemini-2.0-flash")
+    new GeminiProvider(apiKey: "your-api-key", model: "gemini-3.6-flash")
 );
 ```
 
 ### DeepSeek
 ```csharp
 using var client = new LLMClient(
-    new DeepSeekProvider(apiKey: "your-api-key", model: "deepseek-chat")
+    new DeepSeekProvider(apiKey: "your-api-key", model: "deepseek-flash")
 );
 ```
 
@@ -164,6 +171,9 @@ using var client = new LLMClient(
 );
 ```
 
+If your server requires authentication, pass the key as `apiKey`; it is sent as a Bearer token.
+(Before 4.0.0 the key was ignored.)
+
 ## Reasoning / Thinking
 
 Set how much a model should reason before answering. The same setting works for every provider and
@@ -181,11 +191,14 @@ string answer = await client.GenerateTextAsync("Explain the Monty Hall problem."
 string? reasoning = client.LastReasoning; // null if the provider returned none
 ```
 
+LLMKit recognizes each model's generation from its name and only sends the parameters and values
+that model accepts. Models that do not reason get no reasoning parameters at all.
+
 | Provider | Effort is sent as | Reasoning returned |
 |---|---|---|
-| OpenAI | `reasoning_effort` (reasoning models only) | No (Chat Completions does not return it) |
-| Anthropic | adaptive `thinking` plus `output_config.effort` | Yes, thought summaries |
-| Gemini | `thinking_budget` for 2.5 models, `thinking_level` for newer ones | Yes, thought summaries |
+| OpenAI | `reasoning_effort` (GPT-5 and later, o-series) | No (Chat Completions does not return it) |
+| Anthropic | Claude 4.6 and later: adaptive `thinking` plus `output_config.effort`. Claude 3.7 to 4.5: `thinking` with `budget_tokens` | Yes, thought summaries |
+| Gemini | `thinking_budget` for 2.5 models, `thinking_level` for Gemini 3 and later and Gemma 4 | Yes, thought summaries |
 | DeepSeek | `thinking` on/off plus `reasoning_effort` | Yes, `reasoning_content` |
 | LLM Studio | `reasoning_effort` | Yes, `reasoning` or `reasoning_content` |
 
@@ -193,15 +206,29 @@ When calling a provider directly, use `new LLMRequest().WithReasoningEffort(...)
 `LLMResponse.Reasoning`.
 
 Notes:
-- Reasoning models (GPT-5, o-series) reject `temperature`, `top_p` and the penalty parameters, so
-  LLMKit omits them automatically (unless the reasoning effort is `None`, GPT-5.1 and later).
-  Reasoning tokens count against `maxTokens`, so use a generous value.
-- Anthropic: `None` leaves thinking unset and uses `low` effort. Thinking is adaptive, which needs Claude 4.6 or later.
-- `None` turns reasoning off where the model allows it. Gemini 2.5 Pro and Gemini 3 models cannot
-  fully disable it, so `None` uses the lowest setting there.
+- Reasoning models (GPT-5 and later, o-series) reject `temperature`, `top_p` and the penalty
+  parameters, so LLMKit omits them automatically. The exception is effort `None` on models that
+  can turn reasoning off (GPT-5.1 and later, except GPT-6 Astra and GPT-6.1 Sol). For model names
+  LLMKit cannot classify, use the `isReasoningModel` constructor argument.
+- OpenAI `chat-latest` reasons at a fixed effort and accepts only the default temperature, so it
+  gets neither the reasoning effort nor the sampling parameters.
+- `None` turns reasoning off where the model allows it, otherwise it uses the lowest level the
+  model offers:
+  - OpenAI: `minimal` on GPT-5 (5.0), `low` on the o-series, GPT-6 Astra and GPT-6.1 Sol.
+  - Gemini: `low` on models without `minimal`; budget 128 on Gemini 2.5 Pro.
+- A level a model does not offer is sent as the next higher one. For example, Gemini 3 Pro has no
+  `medium`, so Medium is sent as `high`.
+- Anthropic: `None` leaves thinking unset and uses `low` effort where the model supports effort.
+  Claude 3.7 to 4.5 thinking budgets are Low = 1024, Medium = 8192, High = 24576 tokens, kept at
+  least 1024 tokens below `maxTokens`. With the default 4096 that gives 1024 / 3072 / 3072; with
+  `maxTokens` 32000 the full 1024 / 8192 / 24576.
+  Temperature is not sent while thinking.
 - Gemini 2.5 budgets: Low = 1024, Medium = 8192, High = 24576 tokens.
-- DeepSeek maps medium to high itself, and ignores sampling parameters while thinking.
+- DeepSeek maps medium to high itself and ignores sampling parameters while thinking. Current
+  DeepSeek models think by default when no effort is set.
 - LLM Studio's `reasoning_effort` support depends on the server version (0.4.8 or later) and model.
+- Thinking tokens count toward `maxTokens` (default 4096). At high effort a long reasoning can use
+  it up and leave the answer empty; set a higher `maxTokens` (for example 16000) for reasoning models.
 
 ## Next Steps
 
