@@ -46,6 +46,9 @@ artifacts/
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
 
+# Local settings with API keys
+appsettings.Local.json
+
 # Others
 ~$*
 *~
