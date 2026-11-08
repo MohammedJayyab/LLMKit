@@ -109,29 +109,64 @@ When requesting features, please include:
 4. Request re-review if needed
 5. Merge when approved
 
+## Continuous Integration
+
+GitHub Actions runs `.github/workflows/ci.yml` on every pull request to `master` and every push
+(merge) to `master`. It builds the solution in Release (warnings fail the build), runs the tests,
+packs LLMKit and verifies the package. The `.nupkg` and `.snupkg` can be downloaded from the run
+(artifact `packages`). CI never publishes.
+
 ## Release Process
 
-1. Update version numbers (`<Version>` in `src/LLMKit/LLMKit.csproj`)
-2. Update changelog
-3. Create release notes (`<PackageReleaseNotes>` in the same file)
-4. Tag the release
-5. Commit and push, then create the NuGet package with the script. It deletes old build output, runs
-   the tests, packs in Release and verifies the package (version, freshly built DLL, documentation,
-   symbols). On an error it shows the details and keeps the window open:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\pack.ps1
-   ```
-   Or by hand (`dotnet pack` builds the latest code first, so the package always contains the
-   current DLL):
+1. Update the version (`<Version>` in `src/LLMKit/LLMKit.csproj`) and the release notes
+   (`<PackageReleaseNotes>` in the same file; start with `Version <version>:`)
+2. Merge the pull request into `master` after CI passed
+3. Tag the merge commit on `master` and push the tag. The tag must be `v` + the version:
    ```bash
-   dotnet pack src/LLMKit/LLMKit.csproj -c Release -o artifacts -p:ContinuousIntegrationBuild=true
+   git switch master
+   git pull
+   git tag v<version>
+   git push origin v<version>
    ```
-   This writes `LLMKit.<version>.nupkg` and the symbol package `LLMKit.<version>.snupkg` to
-   `artifacts/` (ignored by git). Building the projects does not create packages.
-6. Publish both. `dotnet nuget push` uploads the `.snupkg` next to the `.nupkg` automatically:
-   ```bash
-   dotnet nuget push artifacts/LLMKit.<version>.nupkg --source https://api.nuget.org/v3/index.json --api-key <key>
-   ```
+4. `.github/workflows/release.yml` runs CI again, stops if the tag does not match `<Version>`, and
+   then waits for an approval in the `nuget` environment (GitHub > Actions > the run > Review
+   deployments)
+5. After the approval it publishes the `.nupkg` and `.snupkg` to NuGet and creates the GitHub
+   release with the release notes of this version and both files
+
+### One-time setup
+
+- **NuGet Trusted Publishing** (no API key stored in GitHub): on nuget.org > your account >
+  Trusted Publishing, add a policy with owner `MohammedJayyab`, repository `LLMKit`, workflow
+  file `release.yml` and environment `nuget`
+- **GitHub secret** `NUGET_USER`: your nuget.org user name (not the e-mail address), in
+  Settings > Secrets and variables > Actions
+- **GitHub environment** `nuget`: in Settings > Environments, add yourself as a required
+  reviewer, and under deployment branches and tags allow only tags matching `v*.*.*`
+- **Branch protection** for `master`: in Settings > Rules (or Branches), require a pull request
+  and the status check `Build, test and pack` before merging
+
+### Creating a package locally
+
+To create and check a package on your machine without publishing it, run the script. It deletes
+old build output, runs the tests, packs in Release and verifies the package (version, freshly
+built DLL, documentation, symbols). On an error it shows the details and keeps the window open:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\pack.ps1
+```
+Or by hand (`dotnet pack` builds the latest code first, so the package always contains the
+current DLL):
+```bash
+dotnet pack src/LLMKit/LLMKit.csproj -c Release -o artifacts -p:ContinuousIntegrationBuild=true
+```
+This writes `LLMKit.<version>.nupkg` and the symbol package `LLMKit.<version>.snupkg` to
+`artifacts/` (ignored by git). Building the projects does not create packages.
+
+If the release workflow cannot be used, publish by hand (`dotnet nuget push` uploads the
+`.snupkg` next to the `.nupkg` automatically):
+```bash
+dotnet nuget push artifacts/LLMKit.<version>.nupkg --source https://api.nuget.org/v3/index.json --api-key <key>
+```
 
 ## Questions?
 

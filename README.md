@@ -1,6 +1,7 @@
 # LLMKit
 
 [![NuGet](https://img.shields.io/nuget/v/LLMKit.svg)](https://www.nuget.org/packages/LLMKit)
+[![CI](https://img.shields.io/github/actions/workflow/status/MohammedJayyab/LLMKit/ci.yml?branch=master&label=CI)](https://github.com/MohammedJayyab/LLMKit/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/MohammedJayyab/LLMKit)
 [![Documentation](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/MohammedJayyab/LLMKit/wiki)
