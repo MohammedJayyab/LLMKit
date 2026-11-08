@@ -2,7 +2,7 @@
 
 This document outlines potential future improvements for LLMKit.
 
-## 🎯 Current Version (3.2.1)
+## 🎯 Current Version (4.0.0)
  
 Current features include:
 - ✅ Unified interface for multiple LLM providers
@@ -19,6 +19,12 @@ Current features include:
 - ✅ Automatic retries for failed requests (network errors, 408, 429 and 5xx)
 - ✅ Providers: OpenAI, Anthropic (Claude), Gemini, DeepSeek and LLM Studio (local models)
 - ✅ Reasoning / thinking effort control across providers, with access to the returned reasoning
+- ✅ Per-model reasoning parameters: each model gets only the values it accepts (new in 4.0.0)
+- ✅ Token usage per response: input, output and reasoning tokens (new in 4.0.0)
+- ✅ Finish reason per response: complete, cut off at `maxTokens`, or blocked (new in 4.0.0)
+- ✅ Model capabilities: check reasoning effort, temperature, reasoning text and image support (new in 4.0.0)
+- ✅ List of the supported providers (new in 4.0.0)
+- ✅ `maxTokens` without the 4096 cap: the model's own limit applies (new in 4.0.0)
 
 ## 📈 Planned Improvements
 
@@ -28,8 +34,9 @@ Potential enhancements being considered:
 - Message streaming support
 - Enhanced error handling and logging
 - Additional provider support (for example Azure OpenAI, Mistral, Ollama)
-- Responses API support for OpenAI
-- Token usage and finish reason on responses
+- Responses API support for OpenAI (needed for `*-codex` and `*-pro` models)
+- `XHigh` and `Max` reasoning effort levels
+- Configurable request timeout (long responses with a high `maxTokens` can exceed the fixed timeout)
 - Performance optimizations
 - Retry policies with configurable strategies
 - Memory usage optimizations

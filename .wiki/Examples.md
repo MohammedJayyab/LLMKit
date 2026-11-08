@@ -182,7 +182,7 @@ var client = new LLMClient(
 var client = new LLMClient(
     new GeminiProvider(
         apiKey: "your-api-key",
-        model: "gemini-2.0-flash",
+        model: "gemini-3.6-flash",
         endpoint: new Uri("https://generativelanguage.googleapis.com/v1beta/models")
     )
 );
@@ -231,6 +231,19 @@ Console.WriteLine(response.Reasoning);
 using var client = new LLMClient(
     new OpenAIProvider(apiKey: "your-api-key", model: "gpt-5.2"),
     reasoningEffort: ReasoningEffort.None
+);
+```
+
+### A reasoning model LLMKit cannot recognize by name
+```csharp
+// For example a deployment behind an OpenAI-compatible endpoint
+using var client = new LLMClient(
+    new OpenAIProvider(
+        apiKey: "your-api-key",
+        model: "my-reasoning-deployment",
+        endpoint: new Uri("https://my-endpoint.example.com/v1/chat/completions"),
+        isReasoningModel: true),
+    reasoningEffort: ReasoningEffort.High
 );
 ```
 

@@ -60,7 +60,7 @@ Thank you for your interest in contributing to LLMKit! This document provides gu
 ## Adding New Providers
 
 1. Create a new provider class deriving from `BaseLLMProvider` (it provides the shared HTTP client, retries and error handling)
-2. Add provider-specific request/response models
+2. Add provider-specific response models as `internal` classes (they are not part of the public API)
 3. Override `CreateRequestData` and `GenerateTextAsync`. Map `LLMRequest` (including `ReasoningEffort`) and fill `LLMResponse` (including `Reasoning` if the provider returns it)
 4. Add unit tests
 5. Update documentation (README, wiki and the release notes in `LLMKit.csproj`)
@@ -111,11 +111,27 @@ When requesting features, please include:
 
 ## Release Process
 
-1. Update version numbers
+1. Update version numbers (`<Version>` in `src/LLMKit/LLMKit.csproj`)
 2. Update changelog
-3. Create release notes
+3. Create release notes (`<PackageReleaseNotes>` in the same file)
 4. Tag the release
-5. Create NuGet package
+5. Commit and push, then create the NuGet package with the script. It deletes old build output, runs
+   the tests, packs in Release and verifies the package (version, freshly built DLL, documentation,
+   symbols). On an error it shows the details and keeps the window open:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\pack.ps1
+   ```
+   Or by hand (`dotnet pack` builds the latest code first, so the package always contains the
+   current DLL):
+   ```bash
+   dotnet pack src/LLMKit/LLMKit.csproj -c Release -o artifacts -p:ContinuousIntegrationBuild=true
+   ```
+   This writes `LLMKit.<version>.nupkg` and the symbol package `LLMKit.<version>.snupkg` to
+   `artifacts/` (ignored by git). Building the projects does not create packages.
+6. Publish both. `dotnet nuget push` uploads the `.snupkg` next to the `.nupkg` automatically:
+   ```bash
+   dotnet nuget push artifacts/LLMKit.<version>.nupkg --source https://api.nuget.org/v3/index.json --api-key <key>
+   ```
 
 ## Questions?
 

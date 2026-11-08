@@ -49,6 +49,9 @@ artifacts/
 # Local settings with API keys
 appsettings.Local.json
 
+# Local clone of the GitHub wiki (a separate repository; .wiki/ holds the tracked copy)
+LLMKit.wiki/
+
 # Others
 ~$*
 *~
